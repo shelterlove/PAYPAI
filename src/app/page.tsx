@@ -82,13 +82,13 @@ export default function Home() {
   // Show loading during SSR
   if (!mounted) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-[#F1F9FB] to-white">
+      <main className="min-h-screen bg-[url('/grid-noise.svg')] bg-fixed bg-cover" style={{ background: 'var(--pp-bg-gradient)' }}>
         <div className="max-w-3xl mx-auto px-6 py-16">
           <header className="text-center">
-            <h1 className="text-5xl font-semibold text-slate-900 tracking-tight">
+            <h1 className="text-5xl font-semibold text-white tracking-tight drop-shadow-lg">
               PayPai
             </h1>
-            <p className="mt-3 text-base text-slate-500">Loading...</p>
+            <p className="mt-3 text-base text-slate-400">Loading...</p>
           </header>
         </div>
       </main>
@@ -98,47 +98,70 @@ export default function Home() {
   // Show connect screen if no wallet is connected
   if (!signerAddress) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-[#F1F9FB] to-white">
-        <div className="max-w-3xl mx-auto px-6 py-16">
-          <header className="text-center">
-            <h1 className="text-5xl font-semibold text-slate-900 tracking-tight">
-              PayPai
-            </h1>
-            <p className="mt-3 text-base text-slate-500">
-              AI-powered smart wallet for Kite AI Chain.
-            </p>
-          </header>
+      <main className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[url('/grid-noise.svg')] bg-fixed bg-cover" style={{ background: 'var(--pp-bg-gradient)' }}>
+        {/* Ambient Background Effects */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-pp-purple/20 rounded-full blur-[120px] animate-float opacity-60"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-pp-cyan/20 rounded-full blur-[100px] animate-float opacity-50" style={{ animationDelay: '2s' }}></div>
+        </div>
 
-          <div className="mt-10">
+        <div className="relative z-10 w-full max-w-md px-6 animate-fade-in-up">
+          <div className="card p-8 sm:p-10 backdrop-blur-2xl border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.3)]">
+            <header className="text-center mb-10">
+              <div className="inline-block mb-4 p-4 rounded-full bg-gradient-to-br from-white/5 to-white/0 border border-white/10 shadow-lg">
+                <span className="text-5xl drop-shadow-md filter">💎</span>
+              </div>
+              <h1 className="text-6xl font-bold tracking-tighter mb-2">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-pp-cyan drop-shadow-sm">Pay</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pp-cyan to-pp-purple drop-shadow-sm">Pai</span>
+              </h1>
+              <p className="text-lg text-slate-400 font-light tracking-wide">
+                AI Agent Wallet for <span className="text-pp-cyan font-medium">Kite Chain</span>
+              </p>
+            </header>
+
             <WalletConnect onPrivateKeyConnect={handlePrivateKeyConnect} />
+
+            <div className="mt-8 text-center">
+              <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">
+                Powered by Kite AI • Secured by ERC-4337
+              </p>
+            </div>
           </div>
         </div>
+
+        {/* Footer decoration */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
       </main>
     );
   }
 
   return (
-    <main className="relative min-h-screen bg-gradient-to-b from-[#F1F9FB] to-white text-slate-900">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-32 right-0 h-96 w-96 rounded-full bg-[radial-gradient(circle_at_top,_rgba(92,213,221,0.24),_transparent_70%)]"></div>
-        <div className="absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-[radial-gradient(circle_at_top,_rgba(90,57,186,0.18),_transparent_70%)]"></div>
-        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-[#F1F9FB] via-white/70 to-transparent"></div>
+    <main className="relative min-h-screen text-white overflow-x-hidden perspective-1000">
+      {/* Background Ambience */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-pp-purple/30 blur-[120px] mix-blend-screen animate-float" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-pp-cyan/20 blur-[100px] mix-blend-screen animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[40%] left-[20%] w-[300px] h-[300px] rounded-full bg-pp-blue/20 blur-[80px] mix-blend-overlay animate-pulse" />
       </div>
-      <div className="relative max-w-7xl mx-auto px-6 py-8">
-        <header ref={headerRef} className="mb-8 card-soft p-6">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 preserve-3d">
+        <header ref={headerRef} className="mb-12 card p-8 backdrop-blur-3xl border-white/30 hover:transform-none">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between relative z-10">
             <div>
-              <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
+              <h1 className="text-5xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-pp-cyan drop-shadow-sm">
                 PayPai
               </h1>
-              <div className="mt-3 text-xs text-slate-500">
-                Secure AI wallet for Kite Chain.
+              <div className="mt-2 text-lg text-pp-cyan/80 font-medium">
+                Secure AI wallet for Kite Chain
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="pill bg-[#5CD5DD]/20 text-[#0F89C0]">Wallet Connected</span>
-              <span className="pill bg-[#5A39BA]/10 text-[#5A39BA]">{networkLabel}</span>
-              <ConnectButton showBalance={false} accountStatus="address" chainStatus="icon" />
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="pill bg-teal-500/20 text-teal-200 border-teal-500/30">Wallet Connected</span>
+              <span className="pill bg-indigo-500/20 text-indigo-200 border-indigo-500/30">{networkLabel}</span>
+              <div className="glass rounded-xl overflow-hidden shadow-lg">
+                <ConnectButton showBalance={false} accountStatus="address" chainStatus="icon" />
+              </div>
               {!isConnected && manualAddress && (
                 <button
                   onClick={() => {
@@ -146,7 +169,7 @@ export default function Home() {
                     setPrivateKey('');
                     setIsWalletDeployed(false);
                   }}
-                  className="btn-danger"
+                  className="btn-danger backdrop-blur-md"
                 >
                   Disconnect Dev Key
                 </button>
@@ -155,49 +178,40 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="grid gap-8 lg:grid-cols-[420px_1fr]">
-          <section className="space-y-6">
-            <div className="card-soft p-5">
+        <div className="grid gap-8 lg:grid-cols-[450px_1fr] items-start">
+          <section className="space-y-8 flex flex-col perspective-1000">
+            <div className="card p-6 transform transition-transform duration-500 hover:rotate-x-2">
               <div className="flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => setShowSetupSteps((prev) => !prev)}
-                  className="flex items-center gap-2 text-left"
+                  className="flex items-center gap-3 text-left w-full group"
                   aria-expanded={showSetupSteps}
                 >
-                  <span className="text-sm text-slate-500">
+                  <span className="text-pp-cyan/70 text-lg transition-transform group-hover:scale-110">
                     {showSetupSteps ? '▾' : '▸'}
                   </span>
-                  <h2 className="text-lg font-semibold text-slate-900">Setup Steps</h2>
+                  <h2 className="text-xl font-bold text-white group-hover:text-pp-cyan transition-colors">Setup Steps</h2>
                 </button>
               </div>
               {showSetupSteps && (
-                <div className="relative mt-3 pl-6 text-sm text-slate-700">
-                  <div className="absolute left-3 top-1 bottom-1 w-px bg-slate-200"></div>
-                  <div className="relative flex items-center justify-between gap-4 py-1.5">
-                    <span>1. Deploy AA wallet</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${isWalletDeployed ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
-                      {isWalletDeployed ? 'Done' : 'Pending'}
-                    </span>
-                  </div>
-                  <div className="relative flex items-center justify-between gap-4 py-1.5">
-                    <span>2. Create & configure Vault</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${vaultAddress ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
-                      {vaultAddress ? 'Done' : 'Pending'}
-                    </span>
-                  </div>
-                  <div className="relative flex items-center justify-between gap-4 py-1.5">
-                    <span>3. Authorize automation</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${vaultExecutorReady ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
-                      {vaultExecutorReady ? 'Done' : 'Pending'}
-                    </span>
-                  </div>
-                  <div className="relative flex items-center justify-between gap-4 py-1.5">
-                    <span>4. Execute via Agent</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${vaultExecutorReady ? 'bg-[#5A39BA]/10 text-[#5A39BA]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
-                      {vaultExecutorReady ? 'Ready' : 'Locked'}
-                    </span>
-                  </div>
+                <div className="relative mt-4 pl-4 space-y-3">
+                  <div className="absolute left-[21px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-pp-cyan/50 to-transparent"></div>
+
+                  {[
+                    { label: 'Deploy AA wallet', status: isWalletDeployed ? 'Done' : 'Pending', done: isWalletDeployed },
+                    { label: 'Create & configure Vault', status: vaultAddress ? 'Done' : 'Pending', done: !!vaultAddress },
+                    { label: 'Authorize automation', status: vaultExecutorReady ? 'Done' : 'Pending', done: vaultExecutorReady },
+                    { label: 'Execute via Agent', status: vaultExecutorReady ? 'Ready' : 'Locked', done: vaultExecutorReady }
+                  ].map((step, idx) => (
+                    <div key={idx} className="relative flex items-center justify-between gap-4 py-2 pl-6 group">
+                      <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 ${step.done ? 'bg-pp-cyan border-pp-cyan shadow-[0_0_10px_rgba(0,229,255,0.5)]' : 'bg-slate-800 border-slate-600'}`}></div>
+                      <span className={`text-sm font-medium ${step.done ? 'text-white' : 'text-slate-400'}`}>{idx + 1}. {step.label}</span>
+                      <span className={`rounded-full px-3 py-1 text-[10px] font-bold tracking-wider uppercase ${step.done ? 'bg-pp-cyan/20 text-pp-cyan border border-pp-cyan/30' : 'bg-white/5 text-slate-400 border border-white/10'}`}>
+                        {step.status}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -225,18 +239,21 @@ export default function Home() {
             )}
 
             {!isWalletDeployed && (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-                Deploy your AA wallet to unlock Vault setup and agent execution.
+              <div className="card border-l-4 border-amber-400 bg-amber-500/10 p-5">
+                <p className="text-amber-200 font-medium flex items-center gap-2">
+                  <span className="text-xl">⚠️</span>
+                  Deploy your AA wallet to unlock Vault setup and agent execution.
+                </p>
               </div>
             )}
           </section>
 
-          <section className="space-y-6">
+          <section className="space-y-6 relative">
             {isWalletDeployed ? (
               <>
                 <div
-                  className="sticky z-30"
-                  style={{ top: stickyTop, '--pp-sticky-top': `${stickyTop}px` } as CSSProperties}
+                  className="sticky z-30 transition-all duration-300"
+                  style={{ top: stickyTop }}
                 >
                   <AICommand
                     signerAddress={signerAddress}
@@ -251,8 +268,12 @@ export default function Home() {
                 </div>
               </>
             ) : (
-              <div className="card p-6 text-sm text-slate-600">
-                Deploy your AA wallet to unlock the AI agent.
+              <div className="card p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+                <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 animate-pulse">
+                  <span className="text-4xl">🤖</span>
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">Agent Awaiting Authorization</h3>
+                <p className="text-slate-400 max-w-sm">Deploy your smart wallet to activate the AI agent capabilities on the Kite Chain.</p>
               </div>
             )}
           </section>
@@ -261,3 +282,4 @@ export default function Home() {
     </main>
   );
 }
+

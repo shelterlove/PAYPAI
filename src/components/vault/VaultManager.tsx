@@ -81,10 +81,10 @@ export default function VaultManager({
 
   if (isChecking) {
     return (
-      <div className="card-soft p-6">
+      <div className="card p-6 flex flex-col items-center justify-center min-h-[100px]">
         <div className="flex items-center gap-3">
-          <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-          <span className="text-slate-500">Checking vault status...</span>
+          <div className="animate-spin w-5 h-5 border-2 border-pp-cyan border-t-transparent rounded-full"></div>
+          <span className="text-white/70">Checking vault status...</span>
         </div>
       </div>
     );
@@ -115,16 +115,19 @@ export default function VaultManager({
         onExecutorStatusChange={(authorized) => setExecutorAuthorized(authorized)}
         refreshTrigger={refreshTrigger}
       />
-      <div className="card-soft p-4">
+      <div className="card p-4 border-white/10 bg-white/5">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm text-slate-700 font-semibold">Debug Settings (Development Only)</div>
-            <div className="text-xs text-slate-500">Configure, approve, or withdraw</div>
+            <div className="text-sm text-white font-semibold flex items-center gap-2">
+              <span className="text-lg">🛠️</span>
+              Debug Settings
+            </div>
+            <div className="text-xs text-white/50 pl-7">Configure, approve, or withdraw</div>
           </div>
           <button
             type="button"
             onClick={() => setShowAdvanced((prev) => !prev)}
-            className="btn-tertiary text-xs px-3 py-1.5"
+            className="btn-tertiary text-xs px-3 py-1.5 bg-black/20 text-white border-white/10 hover:bg-white/10"
           >
             {showAdvanced ? 'Hide' : 'Show'}
           </button>
@@ -132,7 +135,7 @@ export default function VaultManager({
       </div>
 
       {showAdvanced && (
-        <>
+        <div className="animate-fade-in space-y-6">
           <VaultApproval
             signerAddress={aaWalletAddress}
             privateKey={privateKey}
@@ -151,8 +154,8 @@ export default function VaultManager({
             privateKey={privateKey}
             onWithdrawn={() => window.location.reload()}
           />
-          <details className="card-soft p-4">
-            <summary className="cursor-pointer text-sm font-semibold text-slate-700">
+          <details className="card p-4 border-white/10 bg-white/5">
+            <summary className="cursor-pointer text-sm font-semibold text-white/80 hover:text-white transition-colors">
               Manual transfer (advanced)
             </summary>
             <div className="mt-4">
@@ -167,7 +170,7 @@ export default function VaultManager({
               />
             </div>
           </details>
-        </>
+        </div>
       )}
     </div>
   );

@@ -554,81 +554,89 @@ export default function AICommand({
   return (
     <div
       id="agent-console"
-      className="card-soft p-6 flex flex-col min-h-[calc(100vh-var(--pp-sticky-top)-24px)] max-h-[calc(100vh-var(--pp-sticky-top))]"
+      className="card flex flex-col min-h-[calc(100vh-var(--pp-sticky-top)-24px)] max-h-[calc(100vh-var(--pp-sticky-top))]"
     >
-      <div className="flex items-center justify-between gap-3 mb-4">
+      <div className="flex items-center justify-between gap-3 mb-4 p-6 pb-0">
         <div className="flex items-center gap-3">
-          <div className="w-2.5 h-2.5 rounded-full animate-pulse bg-[color:var(--pp-accent)]"></div>
-          <h2 className="text-xl font-semibold text-slate-900">
+          <div className="w-3 h-3 rounded-full animate-pulse bg-pp-cyan shadow-[0_0_10px_#00E5FF]"></div>
+          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-pp-purple">
             AI Agent
           </h2>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="rounded-2xl border border-[color:var(--pp-border)] bg-white/90 shadow-[var(--pp-shadow)] flex-1 flex flex-col min-h-0">
-          <div className="flex-1 overflow-auto p-4 space-y-4">
-            {messages.map((message, index) => (
-              <div key={`${message.role}-${index}`} className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
-                {message.role === 'assistant' && (
-                  <div className="h-9 w-9 rounded-full overflow-hidden bg-[var(--pp-gradient)] ring-1 ring-white/70 shadow-sm">
-                    <Image
-                      src={agentAvatar}
-                      alt="Agent avatar"
-                      width={36}
-                      height={36}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                )}
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
-                    message.role === 'assistant'
-                      ? message.kind === 'confirm'
-                        ? 'border border-[#5A39BA]/30 bg-[#F5F2FF] text-[#27308A]'
-                        : message.kind === 'status'
-                          ? message.status === 'success'
-                            ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                            : 'border border-rose-200 bg-rose-50 text-rose-600'
-                          : 'border border-slate-200 bg-slate-50 text-slate-600'
-                      : 'border border-[color:var(--pp-border)] bg-white text-slate-700'
+      <div className="flex-1 flex flex-col min-h-0 relative">
+        <div className="absolute inset-0 bg-white/5 backdrop-blur-md rounded-b-[28px] pointer-events-none"></div>
+        <div className="flex-1 overflow-auto p-6 space-y-6 relative z-10 custom-scrollbar">
+          {messages.map((message, index) => (
+            <div key={`${message.role}-${index}`} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''} animate-slide-in`}>
+              {message.role === 'assistant' && (
+                <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-white/20 shadow-lg">
+                  <Image
+                    src={agentAvatar}
+                    alt="Agent avatar"
+                    width={40}
+                    height={40}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              )}
+              <div
+                className={`max-w-[85%] rounded-3xl px-6 py-4 text-sm leading-relaxed backdrop-blur-md shadow-lg transition-transform hover:scale-[1.01] ${message.role === 'assistant'
+                    ? message.kind === 'confirm'
+                      ? 'border border-pp-purple/40 bg-pp-purple/10 text-white'
+                      : message.kind === 'status'
+                        ? message.status === 'success'
+                          ? 'border border-emerald-500/40 bg-emerald-900/40 text-emerald-100'
+                          : 'border border-rose-500/40 bg-rose-900/40 text-rose-100'
+                        : 'border border-white/10 bg-white/10 text-white/90'
+                    : 'border border-pp-cyan/30 bg-gradient-to-br from-pp-cyan/20 to-pp-blue/20 text-white rounded-tr-sm'
                   }`}
-                >
-                  {message.kind === 'confirm' ? (
-                    <div className="space-y-3">
-                      <div className="text-xs uppercase tracking-[0.16em] text-[#5A39BA] font-semibold">
-                        Transaction Review
-                      </div>
-                      {message.content && (
-                        <div className="text-sm text-slate-700">
-                          {message.content}
-                        </div>
-                      )}
-                      {message.details && (
-                        <div className="space-y-2">
-                          {message.details.map((detail) => (
-                            <div key={detail.label} className="flex items-center justify-between rounded-xl bg-white/80 px-3 py-2 text-sm">
-                              <span className="text-slate-500">{detail.label}</span>
-                              <span className="font-mono text-slate-700">{detail.value}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+              >
+                {message.kind === 'confirm' ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 border-b border-white/10 pb-2">
+                      <span className="text-lg">⚡</span>
+                      <span className="text-xs uppercase tracking-[0.2em] text-pp-violet font-bold">Transaction Review</span>
                     </div>
-                  ) : message.kind === 'status' ? (
-                    <div className="space-y-1">
-                      <div className="text-xs uppercase tracking-[0.16em] font-semibold">
-                        {message.status === 'success' ? 'Transaction Confirmed' : 'Transaction Failed'}
+                    {message.content && (
+                      <div className="text-white/80">
+                        {message.content}
                       </div>
-                      {message.status === 'success' && message.hash ? (
-                        <div className="flex items-center justify-between rounded-xl bg-white/80 px-3 py-2 text-sm">
-                          <span className="text-slate-500">Hash</span>
+                    )}
+                    {message.details && (
+                      <div className="space-y-2 bg-black/20 rounded-xl p-3">
+                        {message.details.map((detail) => (
+                          <div key={detail.label} className="flex items-center justify-between text-sm">
+                            <span className="text-slate-400">{detail.label}</span>
+                            <span className="font-mono text-pp-cyan">{detail.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex gap-2 pt-2">
+                      <div className="text-xs text-white/50 bg-white/5 px-2 py-1 rounded">Reply "Yes" to confirm</div>
+                    </div>
+                  </div>
+                ) : message.kind === 'status' ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 pb-1 border-b border-white/10">
+                      <span className="text-lg">{message.status === 'success' ? '✅' : '❌'}</span>
+                      <span className="text-xs uppercase tracking-[0.2em] font-bold opacity-90">
+                        {message.status === 'success' ? 'Confirmed' : 'Failed'}
+                      </span>
+                    </div>
+                    {message.status === 'success' && message.hash ? (
+                      <div className="flex flex-col gap-2">
+                        <div className="text-xs text-white/70">Transaction successfully executed on Kite Chain.</div>
+                        <div className="flex items-center justify-between rounded-lg bg-black/30 px-3 py-2 text-sm border border-white/5">
+                          <span className="text-slate-400 text-xs">Hash</span>
                           <span className="flex items-center gap-2">
-                            <span className="font-mono text-slate-700">{formatHash(message.hash)}</span>
+                            <span className="font-mono text-pp-cyan text-xs">{formatHash(message.hash)}</span>
                             <button
                               type="button"
                               onClick={() => handleCopy(message.hash!)}
-                              className="btn-tertiary px-2 py-0.5 text-xs"
+                              className="opacity-50 hover:opacity-100 text-white transition-opacity"
                               title="Copy"
                             >
                               ⧉
@@ -638,7 +646,7 @@ export default function AICommand({
                                 href={`${explorerBase}/tx/${message.hash}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="btn-tertiary px-2 py-0.5 text-xs"
+                                className="opacity-50 hover:opacity-100 text-white transition-opacity"
                                 title="View on explorer"
                               >
                                 ↗
@@ -646,146 +654,145 @@ export default function AICommand({
                             )}
                           </span>
                         </div>
-                      ) : (
-                        <div className="text-sm">{message.content}</div>
-                      )}
-                    </div>
-                  ) : (
-                    message.content
-                  )}
-                </div>
-                {message.role === 'user' && (
-                  <div className="h-9 w-9 rounded-full overflow-hidden bg-slate-200 ring-1 ring-white/70 shadow-sm">
-                    <Image
-                      src={userAvatar}
-                      alt="User avatar"
-                      width={36}
-                      height={36}
-                      className="h-full w-full object-cover"
-                    />
+                      </div>
+                    ) : (
+                      <div className="text-sm text-rose-100">{message.content}</div>
+                    )}
                   </div>
+                ) : (
+                  message.content
                 )}
               </div>
-            ))}
-            {isTyping && (
-              <div className="flex items-start gap-3">
-                <div className="h-9 w-9 rounded-full overflow-hidden bg-[var(--pp-gradient)] ring-1 ring-white/70 shadow-sm">
+              {message.role === 'user' && (
+                <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-pp-cyan/30 shadow-lg">
                   <Image
-                    src={agentAvatar}
-                    alt="Agent avatar"
-                    width={36}
-                    height={36}
+                    src={userAvatar}
+                    alt="User avatar"
+                    width={40}
+                    height={40}
                     className="h-full w-full object-cover"
                   />
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.2s]"></span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.1s]"></span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce"></span>
-                  </span>
-                </div>
+              )}
+            </div>
+          ))}
+          {isTyping && (
+            <div className="flex items-start gap-4 animate-pulse">
+              <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-white/20">
+                <Image src={agentAvatar} alt="Agent" width={40} height={40} />
               </div>
-            )}
-            <div ref={messagesEndRef} />
-
-            {error && (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
-                {error}
+              <div className="rounded-2xl px-4 py-3 bg-white/5 border border-white/10">
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-pp-cyan/50 animate-bounce [animation-delay:-0.2s]"></span>
+                  <span className="h-2 w-2 rounded-full bg-pp-cyan/50 animate-bounce [animation-delay:-0.1s]"></span>
+                  <span className="h-2 w-2 rounded-full bg-pp-cyan/50 animate-bounce"></span>
+                </span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
 
-          <div className="border-t border-slate-200 p-4 space-y-3 bg-white/80">
-            {assetType === 'ERC20' && !vaultMode && (
-              <div className="rounded-2xl border border-[color:var(--pp-border)] bg-white/90 p-4 shadow-[var(--pp-shadow)] space-y-3">
-                <div className="text-xs uppercase tracking-[0.16em] text-slate-600 font-semibold">
-                  Token details (optional)
-                </div>
+          {error && (
+            <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 bg-white/5 border-t border-white/10 backdrop-blur-md relative z-20 rounded-b-[28px]">
+          {assetType === 'ERC20' && !vaultMode && (
+            <div className="mb-4 rounded-xl border border-white/10 bg-black/20 p-4 space-y-3">
+              <div className="text-xs uppercase tracking-[0.16em] text-pp-cyan/80 font-semibold">
+                Token details (optional)
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Token Address</label>
+                <input
+                  type="text"
+                  value={tokenAddress}
+                  onChange={(e) => setTokenAddress(e.target.value)}
+                  placeholder="0x..."
+                  className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white font-mono text-xs focus:border-pp-cyan/50 focus:outline-none"
+                  disabled={loading}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">Token Address</label>
+                  <label className="block text-xs text-slate-400 mb-1">Symbol</label>
                   <input
                     type="text"
-                    value={tokenAddress}
-                    onChange={(e) => setTokenAddress(e.target.value)}
-                    placeholder="0x..."
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-mono text-xs"
+                    value={tokenSymbol}
+                    onChange={(e) => setTokenSymbol(e.target.value)}
+                    className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-xs focus:border-pp-cyan/50 focus:outline-none"
                     disabled={loading}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-slate-500 mb-1">Token Name / Symbol</label>
-                    <input
-                      type="text"
-                      value={tokenSymbol}
-                      onChange={(e) => setTokenSymbol(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 text-xs"
-                      disabled={loading}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-slate-500 mb-1">Decimals</label>
-                    <input
-                      type="number"
-                      value={tokenDecimals}
-                      onChange={(e) => setTokenDecimals(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 text-xs"
-                      disabled={loading}
-                    />
-                  </div>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">Decimals</label>
+                  <input
+                    type="number"
+                    value={tokenDecimals}
+                    onChange={(e) => setTokenDecimals(e.target.value)}
+                    className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-xs focus:border-pp-cyan/50 focus:outline-none"
+                    disabled={loading}
+                  />
                 </div>
               </div>
-            )}
-            <label className="block text-sm text-slate-500">
-              Message
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder="Send 0.001 USDT to 0x... or 10 USDT to 0x..."
-                className="flex-1 min-w-[220px] px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono text-sm"
-                disabled={loading}
-              />
-              <button
-                onClick={handleSend}
-                disabled={loading || !input.trim()}
-                className="btn-secondary"
-                aria-label="Send"
-              >
-                {loading ? '...' : '➤'}
-              </button>
             </div>
+          )}
 
-            <div className="flex flex-wrap gap-2 text-xs text-slate-500">
-              <button type="button" onClick={() => setInput('Send 0.001 USDT to 0x1234...')} className="pill bg-slate-100 text-slate-600">
-                Send 0.001 USDT to 0x1234…
-              </button>
-              <button type="button" onClick={() => setInput('Transfer 0.01 USDT to my friend')} className="pill bg-slate-100 text-slate-600">
-                Transfer 0.01 USDT to my friend
-              </button>
-              <button type="button" onClick={() => setInput('Pay 0.005 USDT for subscription')} className="pill bg-slate-100 text-slate-600">
-                Pay 0.005 USDT for subscription
-              </button>
-              <button type="button" onClick={() => setInput('Send 15 USDT to 0xabcd...')} className="pill bg-slate-100 text-slate-600">
-                Send 15 USDT to 0xabcd…
-              </button>
-            </div>
-
-            {useVault && vaultAddress && (
-              <p className="text-xs text-[#0F89C0]">
-                Vault mode uses settlement token transfers only.
-              </p>
-            )}
+          <div className="relative flex items-center gap-3">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Ask to send ETH or tokens..."
+              className="flex-1 w-full px-5 py-4 bg-black/20 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:border-pp-cyan/50 focus:ring-1 focus:ring-pp-cyan/20 font-medium transition-all"
+              disabled={loading}
+            />
+            <button
+              onClick={handleSend}
+              disabled={loading || !input.trim()}
+              className="absolute right-2 p-2 rounded-xl bg-pp-primary-gradient text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform"
+              aria-label="Send"
+            >
+              {loading ? (
+                <span className="block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              ) : (
+                <span className="text-xl">➤</span>
+              )}
+            </button>
           </div>
+
+          <div className="mt-4 flex flex-wrap gap-2 text-xs">
+            {[
+              'Send 0.001 ETH to 0x1234...',
+              'Transfer 0.01 USDT to my friend',
+              'Pay 0.005 KITE',
+              'Send 15 USDT to 0xabcd...'
+            ].map(txt => (
+              <button
+                key={txt}
+                type="button"
+                onClick={() => setInput(txt)}
+                className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+              >
+                {txt}
+              </button>
+            ))}
+          </div>
+
+          {useVault && vaultAddress && (
+            <p className="text-xs text-pp-cyan mt-3 text-center border-t border-white/5 pt-2">
+              <span className="mr-1">🔒</span> Vault mode active: Settlement tokens only.
+            </p>
+          )}
         </div>
       </div>
     </div>

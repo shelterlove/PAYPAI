@@ -44,82 +44,90 @@ export default function WalletConnect({ onPrivateKeyConnect }: WalletConnectProp
   };
 
   return (
-    <div className="card-soft p-6">
-      <h2 className="text-xl font-semibold mb-4 text-slate-900">Connect Wallet</h2>
+    <div className="w-full">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-white mb-2">Connect Wallet</h2>
+        <p className="text-slate-400 text-sm">Choose how you want to connect to PayPai</p>
+      </div>
 
-      <div className="space-y-4">
-        <div className="flex justify-center">
-          <ConnectButton showBalance={false} accountStatus="address" chainStatus="icon" />
+      <div className="space-y-6">
+        <div className="flex justify-center transform transition-transform hover:scale-105 duration-300">
+          <div className="p-1 rounded-xl bg-gradient-to-r from-pp-cyan/20 to-pp-purple/20">
+            <ConnectButton showBalance={false} accountStatus="address" chainStatus="icon" />
+          </div>
         </div>
 
         {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200"></div>
+            <div className="w-full border-t border-white/10"></div>
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-slate-400">or</span>
+          <div className="relative flex justify-center text-xs uppercase tracking-widest">
+            <span className="px-4 bg-[#0a0a16] text-slate-500 font-medium">or</span>
           </div>
         </div>
 
         {/* Private Key Input (Toggle) */}
         <button
           onClick={() => setShowPrivateKey(!showPrivateKey)}
-          className="text-sm text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1"
+          className="w-full flex items-center justify-center gap-2 text-sm text-slate-400 hover:text-white transition-colors group py-2"
         >
-          <span>{showPrivateKey ? '▼' : '▶'}</span>
-          <span>Connect with Private Key (Development)</span>
+          <span className={`transition-transform duration-300 ${showPrivateKey ? 'rotate-90' : ''}`}>▶</span>
+          <span className="group-hover:underline decoration-pp-cyan/50 underline-offset-4">Connect with Private Key (Dev)</span>
         </button>
 
         {showPrivateKey && (
-          <div className="space-y-3 pt-2">
-            <div>
-              <label className="block text-sm text-slate-500 mb-2">
-                Private Key (Development Only)
+          <div className="space-y-4 animate-slide-in">
+            <div className="relative">
+              <label className="block text-xs uppercase tracking-wider text-pp-cyan/80 mb-2 font-bold ml-1">
+                Private Key
               </label>
               <input
                 type="password"
                 value={privateKey}
                 onChange={(e) => setPrivateKey(e.target.value)}
-                placeholder="Enter your private key"
-                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                placeholder="0x..."
+                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:border-pp-cyan/50 focus:ring-1 focus:ring-pp-cyan/20 transition-all font-mono text-sm"
                 disabled={loading}
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={handlePrivateKeyConnect}
                 disabled={loading || !privateKey}
-                className="btn-secondary flex-1"
+                className="btn-primary flex-1 py-2.5 text-sm"
               >
-                {loading ? 'Connecting...' : 'Connect'}
+                {loading ? 'Connecting...' : 'Connect Identity'}
               </button>
 
               <button
                 onClick={handleUseDevKey}
                 type="button"
-                className="btn-tertiary"
+                className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white transition-colors text-sm font-medium whitespace-nowrap"
               >
                 Use Dev Key
               </button>
             </div>
 
-            <p className="text-xs text-slate-500">
-              ⚠️ Never share your private key. This is for development only.
+            <p className="text-[10px] text-center text-slate-500 border-t border-white/5 pt-3">
+              <span className="text-amber-500/80 mr-1">⚠️</span>
+              Development mode only. Never use production keys.
             </p>
           </div>
         )}
 
         {isConnected && address && (
-          <div className="text-xs text-slate-500">
-            Connected wallet: {address.slice(0, 8)}...{address.slice(-6)}
+          <div className="text-center p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+            <div className="text-xs text-emerald-200">
+              Connected: <span className="font-mono text-emerald-100">{address.slice(0, 6)}...{address.slice(-4)}</span>
+            </div>
           </div>
         )}
 
         {error && (
-          <div className="text-rose-600 text-sm bg-rose-50 p-3 rounded-xl border border-rose-200">
-            {error}
+          <div className="text-center p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 animate-pulse">
+            <div className="text-xs text-rose-200">{error}</div>
           </div>
         )}
       </div>
