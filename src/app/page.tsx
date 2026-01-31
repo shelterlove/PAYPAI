@@ -1,10 +1,15 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import ThemeToggle from '@/components/ThemeToggle';
+import sparkHackathonLogo from '../../images/spark_ai_hackthon.png';
+import kiteAiLogo from '../../images/kite_ai.png';
+import ethPandaLogo from '../../images/ETH_Panda.png';
+import lxDaoLogo from '../../images/lxdao.svg';
 
 const WalletConnect = dynamic(() => import('@/components/wallet/WalletConnect'), { ssr: false });
 const WalletInfo = dynamic(() => import('@/components/wallet/WalletInfo'), { ssr: false });
@@ -142,8 +147,11 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen text-white overflow-x-hidden perspective-1000 transition-colors duration-300" style={{ color: 'var(--pp-text-main)' }}>
-      <div className="absolute top-6 right-6 z-50">
-        <ThemeToggle />
+      {/* Fixed Theme Toggle Button */}
+      <div className="fixed top-6 right-6 z-50">
+        <div className="backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 rounded-full p-1 border border-slate-200 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300">
+          <ThemeToggle />
+        </div>
       </div>
       {/* Background Ambience */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
@@ -285,6 +293,65 @@ export default function Home() {
             )}
           </section>
         </div>
+
+        <footer className="mt-12 relative rounded-2xl border border-slate-200 dark:border-transparent bg-white dark:bg-gradient-to-br dark:from-slate-900/90 dark:to-slate-800/90 backdrop-blur-md shadow-lg dark:shadow-[0_0_40px_rgba(0,229,255,0.1)] p-8 overflow-hidden">
+          {/* Dark theme gradient border */}
+          <div className="hidden dark:block absolute inset-0 rounded-2xl bg-gradient-to-r from-pp-cyan/20 via-blue-500/20 to-purple-500/20 -z-10"></div>
+          <div className="hidden dark:block absolute inset-[1px] rounded-2xl bg-gradient-to-br from-slate-900/90 to-slate-800/90 -z-10"></div>
+
+          <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="text-base font-bold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:via-pp-cyan dark:to-blue-400">
+                SPARK AI Hackathon
+              </div>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                感谢赞助方 Kite AI 以及举办方 ETH Panda 与 LX Dao 的支持。
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-4">
+              <a
+                href="https://github.com/CasualHackathon/SPARK-AI-Hackathon"
+                target="_blank"
+                rel="noreferrer"
+                className="h-12 w-auto group relative"
+                title="SPARK AI Hackathon"
+              >
+                <div className="absolute inset-0 rounded-lg bg-white/0 dark:bg-white/5 group-hover:bg-white/100 dark:group-hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"></div>
+                <Image src={sparkHackathonLogo} alt="SPARK AI Hackathon" className="relative h-12 w-auto object-contain opacity-90 group-hover:opacity-100 dark:opacity-80 dark:group-hover:opacity-100 transition-opacity p-1" />
+              </a>
+              <a
+                href="https://gokite.ai/"
+                target="_blank"
+                rel="noreferrer"
+                className="h-12 w-auto group relative"
+                title="Kite AI"
+              >
+                <div className="absolute inset-0 rounded-lg bg-white/0 dark:bg-white/5 group-hover:bg-white/100 dark:group-hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"></div>
+                <Image src={kiteAiLogo} alt="Kite AI" className="relative h-12 w-auto object-contain opacity-90 group-hover:opacity-100 dark:opacity-80 dark:group-hover:opacity-100 transition-opacity p-1" />
+              </a>
+              <a
+                href="https://ethpanda.org/"
+                target="_blank"
+                rel="noreferrer"
+                className="h-12 w-auto group relative"
+                title="ETH Panda"
+              >
+                <div className="absolute inset-0 rounded-lg bg-white/0 dark:bg-white/5 group-hover:bg-white/100 dark:group-hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"></div>
+                <Image src={ethPandaLogo} alt="ETH Panda" className="relative h-12 w-auto object-contain opacity-90 group-hover:opacity-100 dark:opacity-80 dark:group-hover:opacity-100 transition-opacity p-1" />
+              </a>
+              <a
+                href="https://lxdao.io/"
+                target="_blank"
+                rel="noreferrer"
+                className="h-12 w-auto group relative"
+                title="LX Dao"
+              >
+                <div className="absolute inset-0 rounded-lg bg-white/0 dark:bg-white/5 group-hover:bg-white/100 dark:group-hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"></div>
+                <Image src={lxDaoLogo} alt="LX Dao" className="relative h-12 w-auto object-contain opacity-90 group-hover:opacity-100 dark:opacity-80 dark:group-hover:opacity-100 transition-opacity p-1" />
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
     </main>
   );

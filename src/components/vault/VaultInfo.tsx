@@ -217,7 +217,7 @@ export default function VaultInfo({
     <div className="card-soft p-6">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">Vault</h2>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:via-pp-cyan dark:to-blue-400">Vault</h2>
         </div>
         <div className="flex items-center gap-2">
           <span className={`pill text-xs ${isDeployed ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-600 border border-[color:var(--pp-border)]'}`}>
@@ -293,7 +293,7 @@ export default function VaultInfo({
         {vaultData.spendingRules && vaultData.spendingRules.length > 0 && (
           <div className="pt-3 border-t border-slate-200">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-semibold text-slate-700">Spending Rules</h3>
+              <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200">Spending Rules</h3>
               <span className="pill bg-white text-slate-500 border border-[color:var(--pp-border)] text-xs">
                 {vaultData.spendingRules.length} rule{vaultData.spendingRules.length > 1 ? 's' : ''}
               </span>
@@ -466,7 +466,7 @@ export default function VaultInfo({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-sm px-4">
           <div className="w-full max-w-2xl card-soft p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-slate-900">Change Spending Rules</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Change Spending Rules</h3>
               <button
                 type="button"
                 onClick={() => setShowRuleEditor(false)}

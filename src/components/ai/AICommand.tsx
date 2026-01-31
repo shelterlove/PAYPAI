@@ -559,7 +559,7 @@ export default function AICommand({
       <div className="flex items-center justify-between gap-3 mb-4 p-6 pb-0">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 rounded-full animate-pulse bg-pp-cyan shadow-[0_0_10px_#00E5FF]"></div>
-          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-pp-purple">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:to-pp-purple">
             AI Agent
           </h2>
         </div>
