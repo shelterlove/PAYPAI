@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import { KITE_CONTRACTS } from '@/types';
+import { createRpcProvider } from '@/lib/rpc';
 
 const VAULT_ABI = [
   'function getSpendingRules() external view returns (tuple(address token, uint256 timeWindow, uint256 budget, uint256 initialWindowStartTime, address[] whitelist, address[] blacklist)[])',
   'function settlementToken() external view returns (address)',
   'function spendingAccount() external view returns (address)',
   'function owner() external view returns (address)',
-  'function isExecutor(address executor) external view returns (bool)'
+  'function isExecutor(address executor) external view returns (bool)',
+  'function currentBudget() external view returns (uint256)'
 ];
 
 export async function GET(request: NextRequest) {
@@ -21,7 +23,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_KITE_RPC_URL);
+    const timeoutMs = Number(process.env.KITE_RPC_TIMEOUT_MS || '20000');
+    const provider = createRpcProvider(process.env.NEXT_PUBLIC_KITE_RPC_URL || '', timeoutMs);
     const code = await provider.getCode(address);
     if (code === '0x' || code === '0x0') {
       return NextResponse.json({
@@ -51,6 +54,12 @@ export async function GET(request: NextRequest) {
       provider.getBalance(address),
       contract.getSpendingRules()
     ]);
+    let currentBudgetRaw = 0n;
+    try {
+      currentBudgetRaw = await contract.currentBudget();
+    } catch {
+      currentBudgetRaw = 0n;
+    }
 
     let tokenBalance = 0n;
     let tokenSymbol = 'KITE';
@@ -135,7 +144,9 @@ export async function GET(request: NextRequest) {
       },
       spendingRules: safeRules,
       tokenBalance: ethers.formatUnits(tokenBalance, tokenDecimals),
+      currentBudget: ethers.formatUnits(currentBudgetRaw, tokenDecimals),
       allowance: ethers.formatUnits(allowance, tokenDecimals),
+      allowanceRaw: allowance.toString(),
       tokenMeta: {
         symbol: tokenSymbol,
         decimals: tokenDecimals

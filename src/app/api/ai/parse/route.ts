@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { parseNaturalCommand, generateTransaction } from '@/lib/ai-agent';
+import { parseNaturalCommand, parseConversation, generateTransaction } from '@/lib/ai-agent';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { command } = body;
+    const { command, messages, mode } = body;
 
-    if (!command) {
+    if (!command && !Array.isArray(messages)) {
       return NextResponse.json(
         { error: 'Missing command' },
         { status: 400 }
@@ -25,28 +25,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse the natural language command
-    const parsed = await parseNaturalCommand(command, apiKey, apiUrl, model);
+    let parsed;
+    let reply = '';
+    let status: 'ready' | 'clarify' | 'chat' | 'error' = 'error';
 
-    if (parsed.error) {
+    if (Array.isArray(messages)) {
+      const result = await parseConversation(messages, apiKey, apiUrl, model, { mode });
+      status = result.status;
+      reply = result.reply;
+      parsed = result.parsed;
+    } else {
+      parsed = await parseNaturalCommand(command, apiKey, apiUrl, model);
+      if (parsed.error) {
+        return NextResponse.json({
+          success: false,
+          error: parsed.error
+        });
+      }
+      status = 'ready';
+    }
+
+    if (status === 'error') {
       return NextResponse.json({
         success: false,
-        error: parsed.error
+        error: reply || 'Failed to parse command'
       });
     }
 
-    // Generate transaction
-    const transaction = generateTransaction(parsed);
-
-    if (!transaction) {
-      return NextResponse.json({
-        success: false,
-        error: 'Could not generate transaction from command'
-      });
-    }
+    const transaction = status === 'ready' && parsed ? generateTransaction(parsed) : null;
 
     return NextResponse.json({
       success: true,
+      status,
+      reply,
       parsed,
       transaction
     });

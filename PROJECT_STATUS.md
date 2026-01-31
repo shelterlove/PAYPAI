@@ -44,11 +44,22 @@
 - ✅ 千问 Qwen API 集成
 - ✅ AI 命令解析（地址/金额/代币）
 - ✅ AI 命令 UI
+- ✅ **AI 对话分流**：仅在识别到交易意图时进入交易解析/确认流程
+- ✅ 交易确认卡（Transaction Review）+ 成功/失败状态卡
+- ✅ 交易 Hash：中间省略 + 复制 + 浏览器跳转
+- ✅ 聊天输入 UX：回车发送 + “正在回答”提示
+- ✅ AI/用户头像显示（images/agent_profile.png / images/user_profile.png）
 
 ### 5) 测试代币与验证
 - ✅ PayPaiTestToken（PPT）支持 `mint` + `faucetMint`
 - ✅ Hardhat Verify 支持 Kite Testnet（Blockscout）
 - ✅ 默认 PPT 代币环境参数
+
+### 6) 交易历史与缓存
+- ✅ Recent Activity 进入 Wallet 面板（可折叠）
+- ✅ 交易记录缓存到本地 JSON（data/wallet-activity.json）
+- ✅ 同步 txlist + tokentx，默认 5 分钟刷新间隔（支持手动刷新）
+- ✅ 同步超时与错误提示优化
 
 ---
 
@@ -83,7 +94,7 @@
 - AI 根据预算 / 白名单执行动作
 
 ### 4) 交易历史与权限系统
-- 交易历史记录
+- 交易历史完善（目前只做了最近 100 条聚合展示）
 - 白名单/黑名单管理与审计
 - 角色/权限管理
 
@@ -108,6 +119,10 @@
    - RainbowKit 默认 autoConnect，会自动恢复上次连接
    - 如需关闭，需要在 wagmi config 设置 `autoConnect: false`
 
+4) **AI 对话需严格区分“聊天 vs 交易”**
+   - 仅当识别到动作意图（send/transfer/pay + 金额/地址）才触发交易确认
+   - 普通问答统一走 chat 模式
+
 ---
 
 ## 📁 关键文件
@@ -120,8 +135,13 @@
   - MetaMask 签名适配（v=27/28）
 - `src/app/api/wallet/approve-erc20/route.ts`
 - `src/app/api/wallet/send-erc20-eoa/route.ts`
+- `src/app/api/wallet/activity/route.ts`
+- `src/lib/activity-db.ts`
 - `contracts/contracts-src/ClientAgentVault.sol`
 - `contracts/contracts-src/VaultFactory.sol`
+- `src/components/ai/AICommand.tsx`
+- `src/components/vault/RecentActivity.tsx`
+- `src/components/wallet/WalletInfo.tsx`
 
 ---
 
@@ -130,6 +150,7 @@
 ```bash
 NEXT_PUBLIC_KITE_NETWORK=kite_testnet
 NEXT_PUBLIC_KITE_RPC_URL=https://rpc-testnet.gokite.ai
+KITE_RPC_TIMEOUT_MS=20000
 NEXT_PUBLIC_BUNDLER_PROXY_URL=/api/bundler
 KITE_BUNDLER_URL=https://bundler-service.staging.gokite.ai/rpc/
 NEXT_PUBLIC_KITE_BUNDLER_URL=https://bundler-service.staging.gokite.ai/rpc/
@@ -137,9 +158,13 @@ NEXT_PUBLIC_KITE_BUNDLER_URL=https://bundler-service.staging.gokite.ai/rpc/
 NEXT_PUBLIC_VAULT_FACTORY=0x8cBCfCDc9B7E8dDa4f36E70b2E144c3BeedF07Ae
 NEXT_PUBLIC_VAULT_IMPLEMENTATION=0xfc4f62951837D372C843CA7Dc490Ba613Ffc6603
 
-NEXT_PUBLIC_DEFAULT_VAULT_TOKEN_ADDRESS=0x6537b2B9B7cE17AF3370fC18D5C01e709C9Bf7f6
-NEXT_PUBLIC_DEFAULT_VAULT_TOKEN_SYMBOL=PPT
-NEXT_PUBLIC_DEFAULT_VAULT_TOKEN_DECIMALS=18
+NEXT_PUBLIC_SETTLEMENT_TOKEN_ADDRESS=0x0fF5393387ad2f9f691FD6Fd28e07E3969e27e63
+NEXT_PUBLIC_SETTLEMENT_TOKEN_SYMBOL=USDT
+NEXT_PUBLIC_SETTLEMENT_TOKEN_DECIMALS=18
+
+NEXT_PUBLIC_DEFAULT_VAULT_TOKEN_ADDRESS=<OPTIONAL>
+NEXT_PUBLIC_DEFAULT_VAULT_TOKEN_SYMBOL=<OPTIONAL>
+NEXT_PUBLIC_DEFAULT_VAULT_TOKEN_DECIMALS=<OPTIONAL>
 
 NEXT_PUBLIC_EXECUTOR_ADDRESS=<YOUR_EXECUTOR_ADDRESS>
 EXECUTOR_PRIVATE_KEY=<YOUR_EXECUTOR_KEY>
@@ -154,10 +179,11 @@ QWEN_API_KEY=<YOUR_QWEN_KEY>
 
 - ✅ Vault 资金流从 **AA 钱包 → Vault 授权 → 执行** 已跑通
 - ✅ Vault UI 能展示 allowance / AA 余额 / 规则
-- ✅ PPT 代币可作为默认测试币
+- ✅ AI 交互已区分聊天/交易意图（非交易问题不会触发确认）
+- ✅ 交易历史缓存 + Recent Activity 展示
 - ❌ Paymaster 模式仍无法通过 AA33 校验
 
-**最后更新：2026-01-30**
+**最后更新：2026-01-31**
 
 ---
 
@@ -175,7 +201,9 @@ QWEN_API_KEY=<YOUR_QWEN_KEY>
 - MetaMask personal_sign 校验 OK，但启用 paymaster 会 AA33
 - 关闭 paymaster（debug）+ AA 钱包自付 gas 可成功
 - Bundler 不支持 eth_call，所有 call 用 RPC
-- 默认 PPT 代币地址：0x6537b2B9B7cE17AF3370fC18D5C01e709C9Bf7f6
-- 最近修改文件：VaultApproval/VaultInfo/wallet-client/VaultFactory/ClientAgentVault
+- 交易历史本地缓存：data/wallet-activity.json（最近 100 条）
+- AI 交易确认卡保留在对话历史中
+- 默认 Settlement Token：0x0fF5393387ad2f9f691FD6Fd28e07E3969e27e63（USDT）
+- 最近修改文件：AICommand / RecentActivity / WalletInfo / activity-db / vault-info
 
 请先阅读 PROJECT_STATUS.md，再继续任务。

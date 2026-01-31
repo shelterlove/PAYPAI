@@ -214,9 +214,9 @@ export default function SendTransaction({
 
   if (!isWalletDeployed) {
     return (
-      <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 opacity-50">
-        <h2 className="text-xl font-semibold mb-4">Send Transaction</h2>
-        <p className="text-gray-400">
+      <div className="card p-6 opacity-60">
+        <h2 className="text-xl font-semibold mb-4 text-slate-900">Send Transaction</h2>
+        <p className="text-slate-500">
           Deploy your AA wallet first to send transactions.
         </p>
       </div>
@@ -224,8 +224,8 @@ export default function SendTransaction({
   }
 
   return (
-    <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-      <h2 className="text-xl font-semibold mb-4">
+    <div className="card-soft p-6">
+      <h2 className="text-xl font-semibold mb-4 text-slate-900">
         {vaultMode
           ? 'Send Settlement Token (Vault)'
           : assetType === 'ETH'
@@ -241,8 +241,8 @@ export default function SendTransaction({
             disabled={vaultMode}
             className={`px-3 py-2 rounded text-sm font-semibold ${
               assetType === 'ETH'
-                ? 'bg-blue-600'
-                : 'bg-zinc-800 border border-zinc-700 text-gray-300'
+                ? 'bg-[#5A39BA] text-white'
+                : 'bg-white border border-[color:var(--pp-border)] text-slate-600'
             } ${vaultMode ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             ETH
@@ -252,8 +252,8 @@ export default function SendTransaction({
             onClick={() => setAssetType('ERC20')}
             className={`px-3 py-2 rounded text-sm font-semibold ${
               assetType === 'ERC20'
-                ? 'bg-green-600'
-                : 'bg-zinc-800 border border-zinc-700 text-gray-300'
+                ? 'bg-[#0F89C0] text-white'
+                : 'bg-white border border-[color:var(--pp-border)] text-slate-600'
             }`}
           >
             ERC20
@@ -263,40 +263,40 @@ export default function SendTransaction({
         {assetType === 'ERC20' && (
           <div className="space-y-3">
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Token Address</label>
+              <label className="block text-sm text-slate-500 mb-2">Token Address</label>
               <input
                 type="text"
                 value={tokenAddress}
                 onChange={(e) => setTokenAddress(e.target.value)}
                 placeholder="0x..."
-                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-mono text-sm"
+                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-mono text-sm"
                 disabled={loading || vaultMode}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-              <label className="block text-sm text-gray-400 mb-2">Token Name / Symbol</label>
+              <label className="block text-sm text-slate-500 mb-2">Token Name / Symbol</label>
                 <input
                   type="text"
                   value={tokenSymbol}
                   onChange={(e) => setTokenSymbol(e.target.value)}
-                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 text-sm"
                   disabled={loading || vaultMode}
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Decimals</label>
+                <label className="block text-sm text-slate-500 mb-2">Decimals</label>
                 <input
                   type="number"
                   value={tokenDecimals}
                   onChange={(e) => setTokenDecimals(e.target.value)}
-                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 text-sm"
                   disabled={loading || vaultMode}
                 />
               </div>
             </div>
             {vaultMode && (
-              <p className="text-xs text-yellow-300">
+              <p className="text-xs text-[#0F89C0]">
                 Vault mode uses the settlement token only.
               </p>
             )}
@@ -304,7 +304,7 @@ export default function SendTransaction({
         )}
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">
+          <label className="block text-sm text-slate-500 mb-2">
             Recipient Address
           </label>
           <input
@@ -312,13 +312,13 @@ export default function SendTransaction({
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
             placeholder="0x..."
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono text-sm"
             disabled={loading}
           />
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">
+          <label className="block text-sm text-slate-500 mb-2">
             Amount ({assetType === 'ETH' ? 'ETH' : tokenSymbol || 'TOKEN'})
           </label>
           <input
@@ -327,19 +327,19 @@ export default function SendTransaction({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.001"
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono text-sm"
             disabled={loading}
           />
         </div>
 
         {error && (
-          <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-800">
+          <div className="text-rose-600 text-sm bg-rose-50 p-3 rounded-xl border border-rose-200">
             {error}
           </div>
         )}
 
         {txHash && (
-          <div className="text-green-400 text-sm bg-green-900/20 p-3 rounded border border-green-800">
+          <div className="text-emerald-600 text-sm bg-emerald-50 p-3 rounded-xl border border-emerald-200">
             <div className="font-semibold mb-1">Transaction Sent!</div>
             <div className="font-mono text-xs break-all">
               Hash: {txHash}
@@ -350,7 +350,7 @@ export default function SendTransaction({
         <button
           onClick={handleSend}
           disabled={loading || !recipient || !amount || (assetType === 'ERC20' && !tokenAddress)}
-          className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-semibold"
+          className="w-full btn-primary"
         >
           {loading ? 'Sending...' : 'Send Transaction'}
         </button>

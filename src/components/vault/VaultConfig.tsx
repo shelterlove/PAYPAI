@@ -11,13 +11,22 @@ interface VaultConfigProps {
   privateKey: string;
   onConfigured?: () => void;
   vaultAddress?: string;
+  embedded?: boolean;
+  hideTitle?: boolean;
 }
 
 const VAULT_ABI = [
   'function configureSpendingRules((address token, uint256 timeWindow, uint256 budget, uint256 initialWindowStartTime, address[] whitelist, address[] blacklist)[] calldata rules) external'
 ];
 
-export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured, vaultAddress: vaultAddressProp }: VaultConfigProps) {
+export default function VaultConfig({
+  aaWalletAddress,
+  privateKey,
+  onConfigured,
+  vaultAddress: vaultAddressProp,
+  embedded = false,
+  hideTitle = false
+}: VaultConfigProps) {
   const [vaultAddress, setVaultAddress] = useState(vaultAddressProp || '');
   const [budget, setBudget] = useState('100');
   const [timeWindow, setTimeWindow] = useState('24');
@@ -143,13 +152,12 @@ export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured,
     }
   };
 
-  return (
-    <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-      <h2 className="text-xl font-semibold mb-4">Configure Spending Rules</h2>
-
+  const content = (
+    <>
+      {!hideTitle && <h2 className="text-xl font-semibold mb-4">Configure Spending Rules</h2>}
       <div className="space-y-4">
         <div>
-          <label className="block text-sm text-gray-400 mb-2">
+          <label className="block text-sm text-slate-500 mb-2">
             Vault Address
           </label>
           <input
@@ -157,16 +165,16 @@ export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured,
             value={vaultAddress}
             onChange={(e) => setVaultAddress(e.target.value)}
             placeholder="0x..."
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono text-sm"
             disabled={loading}
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Enter your deployed ClientAgentVault address
           </p>
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">
+          <label className="block text-sm text-slate-500 mb-2">
             Token Address
           </label>
           <input
@@ -174,17 +182,17 @@ export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured,
             value={tokenAddress}
             onChange={(e) => setTokenAddress(e.target.value)}
             placeholder="0x..."
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono text-sm"
             disabled={loading}
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Token used for spending rule and vault transfers.
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-2">
+            <label className="block text-sm text-slate-500 mb-2">
               Token Name / Symbol
             </label>
             <input
@@ -192,12 +200,12 @@ export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured,
               value={tokenSymbol}
               onChange={(e) => setTokenSymbol(e.target.value)}
               placeholder="PPT"
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm"
+              className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 text-sm"
               disabled={loading}
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-2">
+            <label className="block text-sm text-slate-500 mb-2">
               Token Decimals
             </label>
             <input
@@ -205,7 +213,7 @@ export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured,
               value={tokenDecimals}
               onChange={(e) => setTokenDecimals(e.target.value)}
               placeholder="18"
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+              className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono text-sm"
               disabled={loading}
             />
           </div>
@@ -213,7 +221,7 @@ export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured,
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-2">
+            <label className="block text-sm text-slate-500 mb-2">
               Budget ({tokenSymbol || 'Tokens'})
             </label>
             <input
@@ -221,13 +229,13 @@ export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured,
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
               placeholder="100"
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+              className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono text-sm"
               disabled={loading}
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-2">
+            <label className="block text-sm text-slate-500 mb-2">
               Time Window (Hours)
             </label>
             <input
@@ -235,14 +243,14 @@ export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured,
               value={timeWindow}
               onChange={(e) => setTimeWindow(e.target.value)}
               placeholder="24"
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+              className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono text-sm"
               disabled={loading}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">
+          <label className="block text-sm text-slate-500 mb-2">
             Whitelist (Optional)
           </label>
           <input
@@ -250,16 +258,16 @@ export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured,
             value={allowedProviders}
             onChange={(e) => setAllowedProviders(e.target.value)}
             placeholder="0xabc..., 0xdef..."
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono text-sm"
             disabled={loading}
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Comma-separated whitelist. Leave empty to allow all recipients.
           </p>
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">
+          <label className="block text-sm text-slate-500 mb-2">
             Blacklist (Optional)
           </label>
           <input
@@ -267,19 +275,19 @@ export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured,
             value={blockedProviders}
             onChange={(e) => setBlockedProviders(e.target.value)}
             placeholder="0xabc..., 0xdef..."
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono text-sm"
             disabled={loading}
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Blacklisted recipients are always blocked, even if whitelisted.
           </p>
         </div>
 
-        <div className="bg-blue-900/20 p-3 rounded border border-blue-800">
-          <p className="text-sm text-blue-300">
+        <div className="bg-blue-50 p-3 rounded border border-blue-200">
+          <p className="text-sm text-blue-700">
             <strong>Rule Explanation:</strong>
           </p>
-          <ul className="text-xs text-blue-200 mt-2 space-y-1">
+          <ul className="text-xs text-blue-600 mt-2 space-y-1">
             <li>• Budget: Maximum tokens that can be spent</li>
             <li>• Time Window: Period in hours for budget reset</li>
             <li>• Empty whitelist: All recipients allowed</li>
@@ -287,21 +295,21 @@ export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured,
           </ul>
         </div>
 
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-slate-500">
           Note: Vault spends from your AA wallet balance. Ensure allowance is set.
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-slate-500">
           If you change the token, you must approve the vault again.
         </p>
 
         {error && (
-          <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-800">
+          <div className="text-rose-600 text-sm bg-rose-50 p-3 rounded border border-rose-200">
             {error}
           </div>
         )}
 
         {txHash && (
-          <div className="text-green-400 text-sm bg-green-900/20 p-3 rounded border border-green-800">
+          <div className="text-emerald-600 text-sm bg-emerald-50 p-3 rounded border border-emerald-200">
             <div className="font-semibold mb-1">Rules Configured!</div>
             <div className="font-mono text-xs break-all">
               Hash: {txHash}
@@ -312,11 +320,21 @@ export default function VaultConfig({ aaWalletAddress, privateKey, onConfigured,
         <button
           onClick={handleConfigure}
           disabled={loading || !vaultAddress || !budget || !timeWindow || !tokenAddress}
-          className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-semibold"
+          className="w-full btn-secondary"
         >
           {loading ? 'Configuring...' : 'Configure Rules'}
         </button>
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div>{content}</div>;
+  }
+
+  return (
+    <div className="card-soft p-6">
+      {content}
     </div>
   );
 }

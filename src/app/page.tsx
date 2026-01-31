@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 const WalletConnect = dynamic(() => import('@/components/wallet/WalletConnect'), { ssr: false });
 const WalletInfo = dynamic(() => import('@/components/wallet/WalletInfo'), { ssr: false });
-const SendTransaction = dynamic(() => import('@/components/wallet/SendTransaction'), { ssr: false });
 const AICommand = dynamic(() => import('@/components/ai/AICommand'), { ssr: false });
 const VaultManager = dynamic(() => import('@/components/vault/VaultManager'), { ssr: false });
 
@@ -20,7 +19,9 @@ export default function Home() {
   const [vaultAddress, setVaultAddress] = useState('');
   const [vaultExecutorReady, setVaultExecutorReady] = useState(false);
   const [useVault, setUseVault] = useState(true);
-  const [activeAction, setActiveAction] = useState<'ai' | 'manual'>('ai');
+  const [showSetupSteps, setShowSetupSteps] = useState(true);
+  const [stickyTop, setStickyTop] = useState(112);
+  const headerRef = useRef<HTMLDivElement | null>(null);
 
   const { address, isConnected } = useAccount();
 
@@ -41,6 +42,11 @@ export default function Home() {
   }, [address, isConnected, manualAddress]);
 
   const effectivePrivateKey = isConnected ? '' : privateKey;
+  const networkLabel = useMemo(() => {
+    const network = process.env.NEXT_PUBLIC_KITE_NETWORK || 'kite_testnet';
+    if (network.toLowerCase().includes('test')) return 'Kite Testnet';
+    return network.replace(/_/g, ' ').toUpperCase();
+  }, []);
 
   useEffect(() => {
     if (isConnected) {
@@ -55,16 +61,34 @@ export default function Home() {
     }
   }, [signerAddress]);
 
+  useEffect(() => {
+    const measure = () => {
+      if (!headerRef.current) return;
+      const height = headerRef.current.getBoundingClientRect().height;
+      const nextTop = Math.round(height + 24);
+      if (Number.isFinite(nextTop) && nextTop > 0) {
+        setStickyTop(nextTop);
+      }
+    };
+
+    const id = requestAnimationFrame(measure);
+    window.addEventListener('resize', measure);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener('resize', measure);
+    };
+  }, [networkLabel, isConnected, manualAddress]);
+
   // Show loading during SSR
   if (!mounted) {
     return (
-      <main className="min-h-screen p-8 bg-black">
-        <div className="max-w-2xl mx-auto">
-          <header className="mb-12 text-center">
-            <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+      <main className="min-h-screen bg-gradient-to-b from-[#F1F9FB] to-white">
+        <div className="max-w-3xl mx-auto px-6 py-16">
+          <header className="text-center">
+            <h1 className="text-5xl font-semibold text-slate-900 tracking-tight">
               PayPai
             </h1>
-            <p className="text-xl text-gray-400">Loading...</p>
+            <p className="mt-3 text-base text-slate-500">Loading...</p>
           </header>
         </div>
       </main>
@@ -74,54 +98,110 @@ export default function Home() {
   // Show connect screen if no wallet is connected
   if (!signerAddress) {
     return (
-      <main className="min-h-screen p-8 bg-black">
-        <div className="max-w-2xl mx-auto">
-          <header className="mb-12 text-center">
-            <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+      <main className="min-h-screen bg-gradient-to-b from-[#F1F9FB] to-white">
+        <div className="max-w-3xl mx-auto px-6 py-16">
+          <header className="text-center">
+            <h1 className="text-5xl font-semibold text-slate-900 tracking-tight">
               PayPai
             </h1>
-            <p className="text-xl text-gray-400">
-              AI-Powered Smart Wallet
+            <p className="mt-3 text-base text-slate-500">
+              AI-powered smart wallet for Kite AI Chain.
             </p>
           </header>
 
-          <WalletConnect onPrivateKeyConnect={handlePrivateKeyConnect} />
+          <div className="mt-10">
+            <WalletConnect onPrivateKeyConnect={handlePrivateKeyConnect} />
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-black">
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <header className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-              PayPai
-            </h1>
-            <p className="text-sm text-gray-400">
-              Connected: {signerAddress.slice(0, 8)}...{signerAddress.slice(-6)}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <ConnectButton showBalance={false} accountStatus="address" chainStatus="icon" />
-            {!isConnected && manualAddress && (
-              <button
-                onClick={() => {
-                  setManualAddress('');
-                  setPrivateKey('');
-                  setIsWalletDeployed(false);
-                }}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm"
-              >
-                Disconnect Dev Key
-              </button>
-            )}
+    <main className="relative min-h-screen bg-gradient-to-b from-[#F1F9FB] to-white text-slate-900">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-32 right-0 h-96 w-96 rounded-full bg-[radial-gradient(circle_at_top,_rgba(92,213,221,0.24),_transparent_70%)]"></div>
+        <div className="absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-[radial-gradient(circle_at_top,_rgba(90,57,186,0.18),_transparent_70%)]"></div>
+        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-[#F1F9FB] via-white/70 to-transparent"></div>
+      </div>
+      <div className="relative max-w-7xl mx-auto px-6 py-8">
+        <header ref={headerRef} className="mb-8 card-soft p-6">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
+                PayPai
+              </h1>
+              <div className="mt-3 text-xs text-slate-500">
+                Secure AI wallet for Kite Chain.
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="pill bg-[#5CD5DD]/20 text-[#0F89C0]">Wallet Connected</span>
+              <span className="pill bg-[#5A39BA]/10 text-[#5A39BA]">{networkLabel}</span>
+              <ConnectButton showBalance={false} accountStatus="address" chainStatus="icon" />
+              {!isConnected && manualAddress && (
+                <button
+                  onClick={() => {
+                    setManualAddress('');
+                    setPrivateKey('');
+                    setIsWalletDeployed(false);
+                  }}
+                  className="btn-danger"
+                >
+                  Disconnect Dev Key
+                </button>
+              )}
+            </div>
           </div>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+        <div className="grid gap-8 lg:grid-cols-[420px_1fr]">
           <section className="space-y-6">
+            <div className="card-soft p-5">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setShowSetupSteps((prev) => !prev)}
+                  className="flex items-center gap-2 text-left"
+                  aria-expanded={showSetupSteps}
+                >
+                  <span className="text-sm text-slate-500">
+                    {showSetupSteps ? '▾' : '▸'}
+                  </span>
+                  <h2 className="text-lg font-semibold text-slate-900">Setup Steps</h2>
+                </button>
+              </div>
+              {showSetupSteps && (
+                <div className="relative mt-3 pl-6 text-sm text-slate-700">
+                  <div className="absolute left-3 top-1 bottom-1 w-px bg-slate-200"></div>
+                  <div className="relative flex items-center justify-between gap-4 py-1.5">
+                    <span>1. Deploy AA wallet</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${isWalletDeployed ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
+                      {isWalletDeployed ? 'Done' : 'Pending'}
+                    </span>
+                  </div>
+                  <div className="relative flex items-center justify-between gap-4 py-1.5">
+                    <span>2. Create & configure Vault</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${vaultAddress ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
+                      {vaultAddress ? 'Done' : 'Pending'}
+                    </span>
+                  </div>
+                  <div className="relative flex items-center justify-between gap-4 py-1.5">
+                    <span>3. Authorize automation</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${vaultExecutorReady ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
+                      {vaultExecutorReady ? 'Done' : 'Pending'}
+                    </span>
+                  </div>
+                  <div className="relative flex items-center justify-between gap-4 py-1.5">
+                    <span>4. Execute via Agent</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${vaultExecutorReady ? 'bg-[#5A39BA]/10 text-[#5A39BA]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
+                      {vaultExecutorReady ? 'Ready' : 'Locked'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <WalletInfo
               signerAddress={signerAddress}
               privateKey={effectivePrivateKey}
@@ -137,113 +217,43 @@ export default function Home() {
                   setVaultAddress(address);
                   setVaultExecutorReady(executorReady);
                 }}
+                refreshTrigger={refreshTrigger}
+                onRefresh={() => setRefreshTrigger(prev => prev + 1)}
+                useVault={useVault}
+                vaultExecutorReady={vaultExecutorReady}
               />
             )}
 
             {!isWalletDeployed && (
-              <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 p-6 rounded-lg border border-purple-700">
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  ⚠️ Wallet Not Deployed
-                </h3>
-                <p className="text-sm text-gray-300">
-                  Your AA wallet needs to be deployed before you can send transactions.
-                  Click the button in the wallet info section above.
-                </p>
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                Deploy your AA wallet to unlock Vault setup and agent execution.
               </div>
             )}
           </section>
 
           <section className="space-y-6">
-            {isWalletDeployed && (
-              <div className="bg-zinc-900/80 p-4 rounded-lg border border-zinc-800">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-500">
-                      Execution Mode
-                    </div>
-                    <div className="text-sm text-gray-300">
-                      {vaultAddress
-                        ? vaultExecutorReady
-                          ? 'Vault can auto-execute without prompts.'
-                          : 'Authorize the executor to enable vault automation.'
-                        : 'Deploy a vault to enable auto-execution.'}
-                    </div>
-                  </div>
-                  {vaultAddress && (
-                    <button
-                      onClick={() => setUseVault((prev) => !prev)}
-                      disabled={!vaultExecutorReady}
-                      className={`px-4 py-2 rounded text-sm font-semibold ${
-                        useVault
-                          ? 'bg-green-600 hover:bg-green-700'
-                          : 'bg-zinc-700 hover:bg-zinc-600'
-                      } disabled:bg-gray-700 disabled:cursor-not-allowed`}
-                    >
-                      {useVault ? 'Vault Enabled' : 'Vault Disabled'}
-                    </button>
-                  )}
+            {isWalletDeployed ? (
+              <>
+                <div
+                  className="sticky z-30"
+                  style={{ top: stickyTop, '--pp-sticky-top': `${stickyTop}px` } as CSSProperties}
+                >
+                  <AICommand
+                    signerAddress={signerAddress}
+                    privateKey={effectivePrivateKey}
+                    vaultAddress={vaultAddress}
+                    useVault={useVault && vaultExecutorReady}
+                    onToggleVault={(value) => setUseVault(value)}
+                    vaultToggleDisabled={!vaultExecutorReady}
+                    refreshTrigger={refreshTrigger}
+                    onTransactionExecuted={() => setRefreshTrigger(prev => prev + 1)}
+                  />
                 </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setActiveAction('ai')}
-                    className={`px-4 py-2 rounded text-sm font-semibold ${
-                      activeAction === 'ai'
-                        ? 'bg-blue-600'
-                        : 'bg-zinc-800 border border-zinc-700 text-gray-300'
-                    }`}
-                  >
-                    AI Agent
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveAction('manual')}
-                    className={`px-4 py-2 rounded text-sm font-semibold ${
-                      activeAction === 'manual'
-                        ? 'bg-emerald-600'
-                        : 'bg-zinc-800 border border-zinc-700 text-gray-300'
-                    }`}
-                  >
-                    Manual Send
-                  </button>
-                </div>
-
-                {vaultAddress && (
-                  <p className="mt-3 text-xs text-gray-500">
-                    Vault mode supports the settlement token only. Disable it to send ETH or custom ERC20s.
-                  </p>
-                )}
+              </>
+            ) : (
+              <div className="card p-6 text-sm text-slate-600">
+                Deploy your AA wallet to unlock the AI agent.
               </div>
-            )}
-
-            {!isWalletDeployed && (
-              <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 text-sm text-gray-400">
-                Deploy your AA wallet to unlock AI and manual transactions.
-              </div>
-            )}
-
-            {isWalletDeployed && activeAction === 'ai' && (
-              <AICommand
-                signerAddress={signerAddress}
-                privateKey={effectivePrivateKey}
-                vaultAddress={vaultAddress}
-                useVault={useVault && vaultExecutorReady}
-                refreshTrigger={refreshTrigger}
-                onTransactionExecuted={() => setRefreshTrigger(prev => prev + 1)}
-              />
-            )}
-
-            {isWalletDeployed && activeAction === 'manual' && (
-              <SendTransaction
-                signerAddress={signerAddress}
-                privateKey={effectivePrivateKey}
-                vaultAddress={vaultAddress}
-                useVault={useVault && vaultExecutorReady}
-                refreshTrigger={refreshTrigger}
-                isWalletDeployed={isWalletDeployed}
-                onTransactionSent={() => setRefreshTrigger(prev => prev + 1)}
-              />
             )}
           </section>
         </div>

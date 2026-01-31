@@ -44,8 +44,8 @@ export default function WalletConnect({ onPrivateKeyConnect }: WalletConnectProp
   };
 
   return (
-    <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-      <h2 className="text-xl font-semibold mb-4">Connect Wallet</h2>
+    <div className="card-soft p-6">
+      <h2 className="text-xl font-semibold mb-4 text-slate-900">Connect Wallet</h2>
 
       <div className="space-y-4">
         <div className="flex justify-center">
@@ -55,17 +55,17 @@ export default function WalletConnect({ onPrivateKeyConnect }: WalletConnectProp
         {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-zinc-700"></div>
+            <div className="w-full border-t border-slate-200"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-zinc-900 text-gray-500">or</span>
+            <span className="px-2 bg-white text-slate-400">or</span>
           </div>
         </div>
 
         {/* Private Key Input (Toggle) */}
         <button
           onClick={() => setShowPrivateKey(!showPrivateKey)}
-          className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+          className="text-sm text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1"
         >
           <span>{showPrivateKey ? '▼' : '▶'}</span>
           <span>Connect with Private Key (Development)</span>
@@ -74,7 +74,7 @@ export default function WalletConnect({ onPrivateKeyConnect }: WalletConnectProp
         {showPrivateKey && (
           <div className="space-y-3 pt-2">
             <div>
-              <label className="block text-sm text-gray-400 mb-2">
+              <label className="block text-sm text-slate-500 mb-2">
                 Private Key (Development Only)
               </label>
               <input
@@ -82,7 +82,7 @@ export default function WalletConnect({ onPrivateKeyConnect }: WalletConnectProp
                 value={privateKey}
                 onChange={(e) => setPrivateKey(e.target.value)}
                 placeholder="Enter your private key"
-                className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 disabled={loading}
               />
             </div>
@@ -91,7 +91,7 @@ export default function WalletConnect({ onPrivateKeyConnect }: WalletConnectProp
               <button
                 onClick={handlePrivateKeyConnect}
                 disabled={loading || !privateKey}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                className="btn-secondary flex-1"
               >
                 {loading ? 'Connecting...' : 'Connect'}
               </button>
@@ -99,26 +99,26 @@ export default function WalletConnect({ onPrivateKeyConnect }: WalletConnectProp
               <button
                 onClick={handleUseDevKey}
                 type="button"
-                className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors text-sm"
+                className="btn-tertiary"
               >
                 Use Dev Key
               </button>
             </div>
 
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-slate-500">
               ⚠️ Never share your private key. This is for development only.
             </p>
           </div>
         )}
 
         {isConnected && address && (
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-slate-500">
             Connected wallet: {address.slice(0, 8)}...{address.slice(-6)}
           </div>
         )}
 
         {error && (
-          <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-800">
+          <div className="text-rose-600 text-sm bg-rose-50 p-3 rounded-xl border border-rose-200">
             {error}
           </div>
         )}

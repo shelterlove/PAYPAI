@@ -112,44 +112,44 @@ export default function VaultFactoryDeploy({
   };
 
   return (
-    <div className="bg-gradient-to-r from-green-900/30 to-teal-900/30 p-6 rounded-lg border border-green-700">
+    <div className="card-soft p-6">
       <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+        <div className="flex-shrink-0 w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
           🏭
         </div>
 
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-white mb-2">
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">
             Deploy Vault via Factory
           </h3>
-          <p className="text-sm text-gray-300 mb-4">
+          <p className="text-sm text-slate-500 mb-4">
             Use our Factory contract to deploy your vault in one click!
           </p>
 
           {/* Factory Status */}
-          <div className="bg-zinc-900/50 p-3 rounded-lg mb-4">
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 mb-4">
             {process.env.NEXT_PUBLIC_VAULT_FACTORY ? (
               <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-400">Factory Available</span>
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span className="text-slate-500">Factory Available</span>
                 </div>
-                <div className="font-mono text-green-400 break-all">
+                <div className="font-mono text-emerald-600 break-all">
                   {process.env.NEXT_PUBLIC_VAULT_FACTORY}
                 </div>
               </div>
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <span className="text-yellow-300 text-xs font-semibold">Factory Not Deployed Yet</span>
+                  <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                  <span className="text-amber-700 text-xs font-semibold">Factory Not Deployed Yet</span>
                 </div>
-                <p className="text-xs text-gray-300">
+                <p className="text-xs text-slate-500">
                   Deploy the factory contract first, then use it to deploy vaults.
                 </p>
                 <button
                   onClick={() => setUseManualFactory(true)}
-                  className="w-full px-3 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded text-xs"
+                  className="w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs"
                 >
                   Deploy Factory Guide
                 </button>
@@ -159,8 +159,8 @@ export default function VaultFactoryDeploy({
 
           {/* Manual Factory Input */}
           {useManualFactory && (
-            <div className="bg-zinc-900/50 p-3 rounded-lg mb-4">
-              <label className="block text-xs text-gray-400 mb-2">
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 mb-4">
+              <label className="block text-xs text-slate-500 mb-2">
                 Factory Address (if already deployed):
               </label>
               <input
@@ -168,21 +168,21 @@ export default function VaultFactoryDeploy({
                 value={factoryAddress}
                 onChange={(e) => setFactoryAddress(e.target.value)}
                 placeholder="0x..."
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-white text-xs font-mono"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded text-slate-700 text-xs font-mono"
               />
             </div>
           )}
 
           {/* Vault Address Preview */}
-          <div className="bg-purple-900/20 p-3 rounded-lg mb-4">
-            <p className="text-xs text-gray-400 mb-1">Your Vault Will Be Deployed To:</p>
-            <p className="font-mono text-xs text-purple-400 break-all">
+          <div className="bg-blue-50 p-3 rounded-xl border border-blue-200 mb-4">
+            <p className="text-xs text-slate-500 mb-1">Your Vault Will Be Deployed To:</p>
+            <p className="font-mono text-xs text-blue-600 break-all">
               {calculatedVaultAddress}
             </p>
           </div>
 
           {error && (
-            <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-800 mb-4">
+            <div className="text-rose-600 text-sm bg-rose-50 p-3 rounded-xl border border-rose-200 mb-4">
               {error}
             </div>
           )}
@@ -190,7 +190,7 @@ export default function VaultFactoryDeploy({
           <button
             onClick={handleDeploy}
             disabled={loading || (!process.env.NEXT_PUBLIC_VAULT_FACTORY && !factoryAddress)}
-            className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-all font-semibold flex items-center justify-center gap-2"
+            className="w-full btn-secondary"
           >
             {loading ? (
               <>
@@ -205,7 +205,7 @@ export default function VaultFactoryDeploy({
             )}
           </button>
 
-          <p className="text-xs text-gray-400 mt-3 text-center">
+          <p className="text-xs text-slate-500 mt-3 text-center">
             Uses a standard wallet transaction (gas required).
           </p>
         </div>

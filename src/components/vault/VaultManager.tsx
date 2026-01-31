@@ -1,21 +1,32 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { formatAddress } from '@/lib/wallet';
 import VaultInfo from './VaultInfo';
 import VaultConfig from './VaultConfig';
 import VaultWithdraw from './VaultWithdraw';
 import VaultSetup from './VaultSetup';
-import VaultExecutor from './VaultExecutor';
 import VaultApproval from './VaultApproval';
+import SendTransaction from '@/components/wallet/SendTransaction';
 
 interface VaultManagerProps {
   aaWalletAddress: string;
   privateKey: string;
   onVaultReady?: (vaultAddress: string, executorAuthorized: boolean) => void;
+  refreshTrigger?: number;
+  onRefresh?: () => void;
+  useVault?: boolean;
+  vaultExecutorReady?: boolean;
 }
 
-export default function VaultManager({ aaWalletAddress, privateKey, onVaultReady }: VaultManagerProps) {
+export default function VaultManager({
+  aaWalletAddress,
+  privateKey,
+  onVaultReady,
+  refreshTrigger,
+  onRefresh,
+  useVault,
+  vaultExecutorReady
+}: VaultManagerProps) {
   const [vaultAddress, setVaultAddress] = useState('');
   const [displayAAWallet, setDisplayAAWallet] = useState('');
   const [calculatedAddress, setCalculatedAddress] = useState('');
@@ -70,10 +81,10 @@ export default function VaultManager({ aaWalletAddress, privateKey, onVaultReady
 
   if (isChecking) {
     return (
-      <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+      <div className="card-soft p-6">
         <div className="flex items-center gap-3">
           <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-          <span className="text-gray-400">Checking vault status...</span>
+          <span className="text-slate-500">Checking vault status...</span>
         </div>
       </div>
     );
@@ -90,41 +101,6 @@ export default function VaultManager({ aaWalletAddress, privateKey, onVaultReady
             setDeploymentStatus({ deployed: true, hasBalance: false });
           }}
         />
-
-        {/* Wallet Info */}
-        <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-          <h2 className="text-xl font-semibold mb-4">Your Wallet Information</h2>
-
-          <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-800">
-            <h3 className="text-lg font-semibold text-blue-300 mb-3">
-              📋 Address Overview
-            </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-400">Signer Address (EOA):</span>
-                <span className="font-mono text-blue-300 text-xs">
-                  {formatAddress(aaWalletAddress)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-400">AA Wallet Address:</span>
-                <span className="font-mono text-green-300 text-xs">
-                  {formatAddress(displayAAWallet || aaWalletAddress)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-400">Vault Address:</span>
-                <span className="font-mono text-purple-300 text-xs">
-                  {formatAddress(calculatedAddress)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-400">Status:</span>
-                <span className="text-yellow-400 font-semibold">Not Deployed Yet</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     );
   }
@@ -132,40 +108,23 @@ export default function VaultManager({ aaWalletAddress, privateKey, onVaultReady
   // Vault is deployed - show management interface
   return (
     <div className="space-y-6">
-      <div className="bg-green-900/20 p-4 rounded-lg border border-green-800">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <span className="text-green-300 font-semibold">Vault Deployed</span>
-        </div>
-        <p className="text-xs text-gray-400 mt-1">
-          Managing vault: {formatAddress(vaultAddress)}
-        </p>
-      </div>
-
-      <VaultInfo vaultAddress={vaultAddress} />
-      <VaultApproval
-        signerAddress={aaWalletAddress}
-        privateKey={privateKey}
-        vaultAddress={vaultAddress}
-        onApproved={() => window.location.reload()}
-      />
-      <VaultExecutor
+      <VaultInfo
         vaultAddress={vaultAddress}
         aaWalletAddress={aaWalletAddress}
         privateKey={privateKey}
-        onAuthorized={(authorized) => setExecutorAuthorized(authorized)}
+        onExecutorStatusChange={(authorized) => setExecutorAuthorized(authorized)}
+        refreshTrigger={refreshTrigger}
       />
-
-      <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+      <div className="card-soft p-4">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm text-gray-300 font-semibold">Advanced Settings</div>
-            <div className="text-xs text-gray-500">Change rules or withdraw funds</div>
+            <div className="text-sm text-slate-700 font-semibold">Debug Settings (Development Only)</div>
+            <div className="text-xs text-slate-500">Configure, approve, or withdraw</div>
           </div>
           <button
             type="button"
             onClick={() => setShowAdvanced((prev) => !prev)}
-            className="px-3 py-1.5 text-xs rounded bg-zinc-800 border border-zinc-700 text-gray-300 hover:bg-zinc-700"
+            className="btn-tertiary text-xs px-3 py-1.5"
           >
             {showAdvanced ? 'Hide' : 'Show'}
           </button>
@@ -174,6 +133,12 @@ export default function VaultManager({ aaWalletAddress, privateKey, onVaultReady
 
       {showAdvanced && (
         <>
+          <VaultApproval
+            signerAddress={aaWalletAddress}
+            privateKey={privateKey}
+            vaultAddress={vaultAddress}
+            onApproved={() => window.location.reload()}
+          />
           <VaultConfig
             aaWalletAddress={aaWalletAddress}
             privateKey={privateKey}
@@ -186,6 +151,22 @@ export default function VaultManager({ aaWalletAddress, privateKey, onVaultReady
             privateKey={privateKey}
             onWithdrawn={() => window.location.reload()}
           />
+          <details className="card-soft p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-700">
+              Manual transfer (advanced)
+            </summary>
+            <div className="mt-4">
+              <SendTransaction
+                signerAddress={aaWalletAddress}
+                privateKey={privateKey}
+                vaultAddress={vaultAddress}
+                useVault={Boolean(useVault && vaultExecutorReady)}
+                refreshTrigger={refreshTrigger}
+                isWalletDeployed={Boolean(deploymentStatus?.deployed)}
+                onTransactionSent={onRefresh}
+              />
+            </div>
+          </details>
         </>
       )}
     </div>

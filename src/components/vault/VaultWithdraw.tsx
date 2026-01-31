@@ -107,24 +107,24 @@ export default function VaultWithdraw({
   };
 
   return (
-    <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+    <div className="card-soft p-6">
       <h2 className="text-xl font-semibold mb-4">Withdraw from Vault</h2>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm text-gray-400 mb-2">
+          <label className="block text-sm text-slate-500 mb-2">
             Vault Address
           </label>
           <input
             type="text"
             value={vaultAddress}
             readOnly
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-mono text-sm opacity-75"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-mono text-sm opacity-75"
           />
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">
+          <label className="block text-sm text-slate-500 mb-2">
             Recipient Address
           </label>
           <input
@@ -132,13 +132,13 @@ export default function VaultWithdraw({
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
             placeholder="0x..."
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono text-sm"
             disabled={loading}
           />
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">
+          <label className="block text-sm text-slate-500 mb-2">
             Amount (Tokens)
           </label>
           <input
@@ -147,26 +147,26 @@ export default function VaultWithdraw({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="10"
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono text-sm"
             disabled={loading}
           />
         </div>
 
-        <div className="bg-yellow-900/20 p-3 rounded border border-yellow-800">
-          <p className="text-xs text-yellow-300">
+        <div className="bg-amber-50 p-3 rounded-xl border border-amber-200">
+          <p className="text-xs text-amber-700">
             <strong>⚠️ Warning:</strong> Only the admin (AA wallet) can withdraw from the vault.
             Make sure you have configured spending rules properly.
           </p>
         </div>
 
         {error && (
-          <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-800">
+          <div className="text-rose-600 text-sm bg-rose-50 p-3 rounded border border-rose-200">
             {error}
           </div>
         )}
 
         {txHash && (
-          <div className="text-green-400 text-sm bg-green-900/20 p-3 rounded border border-green-800">
+          <div className="text-emerald-600 text-sm bg-emerald-50 p-3 rounded border border-emerald-200">
             <div className="font-semibold mb-1">Withdrawal Successful!</div>
             <div className="font-mono text-xs break-all">
               Hash: {txHash}
@@ -177,7 +177,7 @@ export default function VaultWithdraw({
         <button
           onClick={handleWithdraw}
           disabled={loading || !amount || !recipient}
-          className="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-semibold"
+          className="w-full btn-secondary"
         >
           {loading ? 'Withdrawing...' : 'Withdraw Tokens'}
         </button>

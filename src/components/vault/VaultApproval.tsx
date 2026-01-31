@@ -6,15 +6,17 @@ import { useAccount, useWalletClient } from 'wagmi';
 import { kiteTestnetChain } from '@/lib/wagmi';
 import { createWalletClientSignFunction } from '@/lib/wallet-client';
 import { getKiteManager } from '@/lib/kite';
+import { KITE_CONTRACTS } from '@/types';
 
 interface VaultApprovalProps {
   signerAddress: string;
   privateKey: string;
   vaultAddress: string;
   onApproved?: () => void;
+  presetTokenAddress?: string;
 }
 
-export default function VaultApproval({ signerAddress, privateKey, vaultAddress, onApproved }: VaultApprovalProps) {
+export default function VaultApproval({ signerAddress, privateKey, vaultAddress, onApproved, presetTokenAddress }: VaultApprovalProps) {
   const [amount, setAmount] = useState('1000');
   const [approveMax, setApproveMax] = useState(true);
   const [tokenAddress, setTokenAddress] = useState('');
@@ -42,6 +44,9 @@ export default function VaultApproval({ signerAddress, privateKey, vaultAddress,
   const [lastWalletAccount, setLastWalletAccount] = useState('');
   const [bundlerUrl, setBundlerUrl] = useState('');
   const [disablePaymaster, setDisablePaymaster] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [registerError, setRegisterError] = useState('');
+  const [registerTxHash, setRegisterTxHash] = useState('');
 
   const { isConnected } = useAccount();
   const { data: walletClient, isLoading: isWalletClientLoading } = useWalletClient({
@@ -69,7 +74,7 @@ export default function VaultApproval({ signerAddress, privateKey, vaultAddress,
       const response = vaultRes;
       if (!response.ok) return;
       const data = await response.json();
-      if (data?.vault?.settlementToken) setTokenAddress(data.vault.settlementToken);
+      if (!presetTokenAddress && data?.vault?.settlementToken) setTokenAddress(data.vault.settlementToken);
       if (data?.vault?.spendingAccount) setSpendingAccount(data.vault.spendingAccount);
       if (data?.tokenMeta?.symbol) setTokenSymbol(data.tokenMeta.symbol);
       if (Number.isFinite(Number(data?.tokenMeta?.decimals))) {
@@ -88,6 +93,45 @@ export default function VaultApproval({ signerAddress, privateKey, vaultAddress,
       fetchInfo();
     }
   }, [vaultAddress]);
+
+  useEffect(() => {
+    if (!presetTokenAddress) return;
+    setTokenAddress(presetTokenAddress);
+    setTokenSymbol('TOKEN');
+
+    const loadTokenMeta = async () => {
+      try {
+        const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_KITE_RPC_URL);
+        const token = new ethers.Contract(
+          presetTokenAddress,
+          [
+            'function decimals() view returns (uint8)',
+            'function symbol() view returns (string)'
+          ],
+          provider
+        );
+        let decimals = 18;
+        try {
+          decimals = Number(await token.decimals());
+        } catch {
+          decimals = 18;
+        }
+        let symbol = 'TOKEN';
+        try {
+          symbol = await token.symbol();
+        } catch {
+          symbol = 'TOKEN';
+        }
+        setTokenDecimals(decimals);
+        setTokenSymbol(symbol);
+      } catch {
+        setTokenDecimals(18);
+        setTokenSymbol('TOKEN');
+      }
+    };
+
+    loadTokenMeta();
+  }, [presetTokenAddress]);
 
   useEffect(() => {
     try {
@@ -149,7 +193,8 @@ export default function VaultApproval({ signerAddress, privateKey, vaultAddress,
             amount,
             privateKey,
             tokenDecimals,
-            useMax: approveMax
+            useMax: approveMax,
+            usePaymaster: !disablePaymaster
           })
         });
 
@@ -294,12 +339,33 @@ export default function VaultApproval({ signerAddress, privateKey, vaultAddress,
           }
         };
 
-        let result = await runAttempt(() => attemptApprove(), 'estimate+personal_sign');
-        if (result?.status?.status !== 'success' && isAA33(result?.status?.reason || lastReason)) {
-          result = await runAttempt(() => sendWithoutEstimate(signWithWalletClient(), 'no-estimate+personal_sign'), 'no-estimate+personal_sign');
-        }
-        if (result?.status?.status !== 'success' && isAA33(result?.status?.reason || lastReason)) {
-          result = await runAttempt(() => sendWithoutEstimate(signWithEthSign(), 'no-estimate+eth_sign'), 'no-estimate+eth_sign');
+        const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+        let result: any;
+
+        if (!disablePaymaster) {
+          const paymasterFlow = async () => {
+            const estimate = await sdk.estimateUserOperation(signerAddress, request);
+            const tokenForPayment = estimate.sponsorshipAvailable
+              ? ZERO_ADDRESS
+              : KITE_CONTRACTS.SETTLEMENT_TOKEN;
+            return sdk.sendUserOperationWithPayment(
+              signerAddress,
+              request,
+              estimate.userOp,
+              tokenForPayment,
+              signWithWalletClient()
+            );
+          };
+
+          result = await runAttempt(paymasterFlow, 'paymaster-flow');
+        } else {
+          result = await runAttempt(() => attemptApprove(), 'estimate+personal_sign');
+          if (result?.status?.status !== 'success' && isAA33(result?.status?.reason || lastReason)) {
+            result = await runAttempt(() => sendWithoutEstimate(signWithWalletClient(), 'no-estimate+personal_sign'), 'no-estimate+personal_sign');
+          }
+          if (result?.status?.status !== 'success' && isAA33(result?.status?.reason || lastReason)) {
+            result = await runAttempt(() => sendWithoutEstimate(signWithEthSign(), 'no-estimate+eth_sign'), 'no-estimate+eth_sign');
+          }
         }
 
         if (result?.status?.status === 'success') {
@@ -399,77 +465,153 @@ export default function VaultApproval({ signerAddress, privateKey, vaultAddress,
     }
   };
 
+  const handleRegisterToken = async () => {
+    setRegisterError('');
+    setRegisterTxHash('');
+    setRegistering(true);
+
+    try {
+      const settlementToken = KITE_CONTRACTS.SETTLEMENT_TOKEN;
+      if (!ethers.isAddress(settlementToken)) {
+        throw new Error('Settlement token not configured');
+      }
+      if (!spendingAccount || !ethers.isAddress(spendingAccount)) {
+        throw new Error('AA wallet address not available');
+      }
+      if (!aaDeployed) {
+        throw new Error('AA wallet not deployed. Deploy it first.');
+      }
+
+      const hasPrivateKey = privateKey && privateKey.length > 0;
+      const hasWalletClient = isConnected && walletClient && !isWalletClientLoading;
+
+      if (hasPrivateKey) {
+        const response = await fetch('/api/wallet/add-supported-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            signerAddress,
+            tokenAddress: settlementToken,
+            privateKey
+          })
+        });
+        const result = await response.json();
+        if (result.status?.status === 'success') {
+          setRegisterTxHash(result.status.transactionHash || '');
+        } else {
+          throw new Error(result.status?.reason || 'Register token failed');
+        }
+      } else if (hasWalletClient) {
+        if (walletClient.chain && walletClient.chain.id !== kiteTestnetChain.id) {
+          throw new Error('Wrong network. Switch MetaMask to Kite Testnet.');
+        }
+        if (walletClient.account?.address && walletClient.account.address.toLowerCase() !== signerAddress.toLowerCase()) {
+          throw new Error('Connected wallet does not match the signer address. Switch accounts.');
+        }
+
+        const sdk = getKiteManager().getSDK();
+        const sdkAny = sdk as any;
+        const accountInterface = new ethers.Interface(['function addSupportedToken(address token)']);
+        const callData = accountInterface.encodeFunctionData('addSupportedToken', [settlementToken]);
+        const signFn = createWalletClientSignFunction(walletClient, signerAddress);
+
+        const userOp = await sdkAny.createUserOperation(
+          signerAddress,
+          { target: spendingAccount, value: 0n, callData },
+          undefined,
+          '0x0000000000000000000000000000000000000000'
+        );
+
+        const packAccountGasLimits = (verificationGasLimit: bigint, callGasLimit: bigint) => {
+          const uint128Max = (BigInt(1) << BigInt(128)) - BigInt(1);
+          if (verificationGasLimit > uint128Max || callGasLimit > uint128Max) {
+            throw new Error('Gas limit exceeds uint128 maximum');
+          }
+          const verificationHex = verificationGasLimit.toString(16).padStart(32, '0');
+          const callHex = callGasLimit.toString(16).padStart(32, '0');
+          return `0x${verificationHex}${callHex}`;
+        };
+
+        userOp.accountGasLimits = packAccountGasLimits(1_500_000n, 500_000n);
+        userOp.preVerificationGas = 1_200_000n;
+
+        const userOpHash = await sdk.getUserOpHash(userOp);
+        const signature = await signFn(userOpHash);
+        userOp.signature = signature;
+        const opHash = await sdkAny.provider.sendUserOperation(userOp, sdkAny.config.entryPoint);
+        const status = await sdk.pollUserOperationStatus(opHash);
+
+        if (status?.status === 'success') {
+          setRegisterTxHash(status.transactionHash || '');
+        } else {
+          throw new Error(status?.reason || 'Register token failed');
+        }
+      } else {
+        throw new Error('Wallet not connected. Please reconnect your wallet.');
+      }
+    } catch (err) {
+      setRegisterError(err instanceof Error ? err.message : 'Register token failed');
+    } finally {
+      setRegistering(false);
+    }
+  };
+
   return (
-    <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+    <div id="vault-approval" className="card-soft p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Approve Vault Spending</h2>
-        <button
-          type="button"
-          onClick={fetchInfo}
-          disabled={refreshing}
-          className="px-3 py-1 text-xs bg-zinc-800 border border-zinc-700 rounded text-gray-300 hover:bg-zinc-700"
-        >
-          {refreshing ? 'Refreshing...' : 'Refresh'}
-        </button>
+        <div>
+          <h2 className="text-lg font-semibold">Approve Vault Spending</h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Approving lets the vault spend from your AA wallet within your spending rules.
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
-          <div className="text-xs text-gray-400 mb-1">Settlement Token</div>
-          <div className="text-xs font-mono text-blue-400 break-all">{tokenAddress || 'Loading...'}</div>
-          <div className="text-xs text-gray-500 mt-1">
-            Current Allowance: {allowance} {tokenSymbol}
+      <div className="space-y-4 text-sm">
+        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-3">
+          <div>
+            <div className="text-sm text-slate-500 mb-1">Token</div>
+            <div className="text-sm font-mono text-blue-600 break-all">{tokenAddress || 'Loading...'}</div>
           </div>
+          {vaultAddress && (
+            <div>
+              <div className="text-sm text-slate-500 mb-1">Vault Address</div>
+              <div className="text-sm font-mono text-blue-600 break-all">{vaultAddress}</div>
+            </div>
+          )}
+          {spendingAccount && (
+            <div>
+              <div className="text-sm text-slate-500 mb-1">Wallet Address</div>
+              <div className="text-sm font-mono text-blue-600 break-all">{spendingAccount}</div>
+            </div>
+          )}
         </div>
 
-        {spendingAccount && (
-          <div className="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
-            <div className="text-xs text-gray-400 mb-1">AA Wallet Address</div>
-            <div className="text-xs font-mono text-blue-400 break-all">{spendingAccount}</div>
-          </div>
-        )}
-
         {derivedAA && spendingAccount && derivedAA.toLowerCase() !== spendingAccount.toLowerCase() && (
-          <div className="text-yellow-300 text-xs bg-yellow-900/20 p-3 rounded border border-yellow-800">
+          <div className="text-amber-700 text-xs bg-amber-50 p-3 rounded-xl border border-amber-200">
             Vault spending account does not match your AA wallet. Please redeploy the vault.
           </div>
         )}
 
         {!aaDeployed && (
-          <div className="text-yellow-300 text-xs bg-yellow-900/20 p-3 rounded border border-yellow-800">
+          <div className="text-amber-700 text-xs bg-amber-50 p-3 rounded-xl border border-amber-200">
             AA wallet not deployed yet. Deploy it before approving.
           </div>
         )}
 
-        <div className="flex items-center gap-2 text-sm text-gray-300">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
           <input
             id="approve-max"
             type="checkbox"
             checked={approveMax}
             onChange={(e) => setApproveMax(e.target.checked)}
           />
-          <label htmlFor="approve-max">Approve max (recommended)</label>
+          <label htmlFor="approve-max">Follow the spending rules</label>
         </div>
-
-        <div className="flex items-center gap-2 text-sm text-gray-300">
-          <input
-            id="disable-paymaster"
-            type="checkbox"
-            checked={disablePaymaster}
-            onChange={(e) => setDisablePaymaster(e.target.checked)}
-          />
-          <label htmlFor="disable-paymaster">Disable paymaster (debug)</label>
-        </div>
-
-        {disablePaymaster && (
-          <div className="text-yellow-300 text-xs bg-yellow-900/20 p-3 rounded border border-yellow-800">
-            Paymaster disabled. Your AA wallet must have native KITE to pay gas.
-          </div>
-        )}
 
         {!approveMax && (
           <div>
-            <label className="block text-sm text-gray-400 mb-2">
+            <label className="block text-sm text-slate-500 mb-2">
               Allowance Amount ({tokenSymbol})
             </label>
             <input
@@ -477,24 +619,24 @@ export default function VaultApproval({ signerAddress, privateKey, vaultAddress,
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="1000"
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-mono text-sm"
+              className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-mono text-sm"
               disabled={loading}
             />
           </div>
         )}
 
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-slate-500">
           Vault can only spend tokens that your AA wallet has approved. You can revoke or change later.
         </p>
 
         {error && (
-          <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-800">
+          <div className="text-rose-600 text-sm bg-rose-50 p-3 rounded-xl border border-rose-200">
             {error}
           </div>
         )}
 
         {txHash && (
-          <div className="text-green-400 text-sm bg-green-900/20 p-3 rounded border border-green-800">
+          <div className="text-emerald-600 text-sm bg-emerald-50 p-3 rounded-xl border border-emerald-200">
             <div className="font-semibold mb-1">Approval Sent!</div>
             <div className="font-mono text-xs break-all">Hash: {txHash}</div>
           </div>
@@ -503,26 +645,26 @@ export default function VaultApproval({ signerAddress, privateKey, vaultAddress,
         <button
           onClick={handleApprove}
           disabled={loading || !tokenAddress || !aaDeployed || (derivedAA && spendingAccount && derivedAA.toLowerCase() !== spendingAccount.toLowerCase())}
-          className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-semibold"
+          className="w-full btn-primary"
         >
           {loading ? 'Approving...' : 'Approve Vault'}
         </button>
 
         {(lastUserOpHash || lastSignature || lastErrorDetails || lastFailureStage || lastRecoveredPrefixed || lastRecoveredRaw) && (
-          <div className="text-xs text-gray-400 bg-zinc-900/60 p-3 rounded border border-zinc-800">
-            <div className="font-semibold text-gray-300 mb-1">Debug (AA33)</div>
+          <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div className="font-semibold text-slate-700 mb-1">Debug (AA33)</div>
             {lastFailureStage && (
-              <div>Stage: <span className="text-blue-300">{lastFailureStage}</span></div>
+              <div>Stage: <span className="text-blue-600">{lastFailureStage}</span></div>
             )}
             {bundlerUrl && (
-              <div>Bundler URL: <span className="text-blue-300">{bundlerUrl}</span></div>
+              <div>Bundler URL: <span className="text-blue-600">{bundlerUrl}</span></div>
             )}
-            <div>Paymaster: <span className="text-blue-300">{disablePaymaster ? 'disabled' : 'enabled'}</span></div>
+            <div>Paymaster: <span className="text-blue-600">{disablePaymaster ? 'disabled' : 'enabled'}</span></div>
             {lastSignMethod && (
-              <div>Method: <span className="text-blue-300">{lastSignMethod}</span></div>
+              <div>Method: <span className="text-blue-600">{lastSignMethod}</span></div>
             )}
             {lastWalletAccount && (
-              <div>Wallet Account: <span className="text-blue-300">{lastWalletAccount}</span></div>
+              <div>Wallet Account: <span className="text-blue-600">{lastWalletAccount}</span></div>
             )}
             {lastUserOpHash && (
               <div className="font-mono break-all">userOpHash: {lastUserOpHash}</div>
@@ -542,43 +684,7 @@ export default function VaultApproval({ signerAddress, privateKey, vaultAddress,
           </div>
         )}
 
-        <div className="border-t border-zinc-800 pt-4">
-          <h3 className="text-sm font-semibold text-gray-300 mb-2">Fund AA Wallet</h3>
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">
-              Amount ({tokenSymbol})
-            </label>
-            <input
-              type="number"
-              value={fundAmount}
-              onChange={(e) => setFundAmount(e.target.value)}
-              placeholder="100"
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-mono text-sm"
-              disabled={funding}
-            />
-          </div>
-
-          {fundError && (
-            <div className="mt-3 text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-800">
-              {fundError}
-            </div>
-          )}
-
-          {fundTxHash && (
-            <div className="mt-3 text-green-400 text-sm bg-green-900/20 p-3 rounded border border-green-800">
-              <div className="font-semibold mb-1">Transfer Sent!</div>
-              <div className="font-mono text-xs break-all">Hash: {fundTxHash}</div>
-            </div>
-          )}
-
-        <button
-          onClick={handleFund}
-          disabled={funding || !spendingAccount || !tokenAddress || !aaDeployed || (derivedAA && spendingAccount && derivedAA.toLowerCase() !== spendingAccount.toLowerCase())}
-          className="mt-3 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-semibold"
-        >
-            {funding ? 'Sending...' : 'Send Tokens to AA Wallet'}
-          </button>
-        </div>
+        
       </div>
     </div>
   );

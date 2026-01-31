@@ -280,40 +280,40 @@ export default function VaultSetup({ signerAddress, privateKey, onReady }: Vault
   };
 
   return (
-    <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-      <h2 className="text-xl font-semibold mb-4">Create Vault (One Step)</h2>
+    <div id="vault-setup" className="card-soft p-6">
+      <h2 className="text-xl font-semibold mb-4 text-slate-900">Create Vault (One Step)</h2>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm text-gray-400 mb-2">Token Address</label>
+          <label className="block text-sm text-slate-500 mb-2">Token Address</label>
           <input
             type="text"
             value={tokenAddress}
             onChange={(e) => setTokenAddress(e.target.value)}
             placeholder="0x..."
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-mono text-sm"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-mono text-sm"
             disabled={loading}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-2">Token Name / Symbol</label>
+            <label className="block text-sm text-slate-500 mb-2">Token Name / Symbol</label>
             <input
               type="text"
               value={tokenSymbol}
               onChange={(e) => setTokenSymbol(e.target.value)}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm"
+              className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 text-sm"
               disabled={loading}
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-2">Token Decimals</label>
+            <label className="block text-sm text-slate-500 mb-2">Token Decimals</label>
             <input
               type="number"
               value={tokenDecimals}
               onChange={(e) => setTokenDecimals(e.target.value)}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-mono text-sm"
+              className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-mono text-sm"
               disabled={loading}
             />
           </div>
@@ -321,31 +321,31 @@ export default function VaultSetup({ signerAddress, privateKey, onReady }: Vault
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-2">
+            <label className="block text-sm text-slate-500 mb-2">
               Budget ({tokenSymbol || 'Tokens'})
             </label>
             <input
               type="number"
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-mono text-sm"
+              className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-mono text-sm"
               disabled={loading}
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-2">Time Window (Hours)</label>
+            <label className="block text-sm text-slate-500 mb-2">Time Window (Hours)</label>
             <input
               type="number"
               value={timeWindow}
               onChange={(e) => setTimeWindow(e.target.value)}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-mono text-sm"
+              className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-mono text-sm"
               disabled={loading}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">
+          <label className="block text-sm text-slate-500 mb-2">
             Whitelist (Optional)
           </label>
           <input
@@ -353,16 +353,16 @@ export default function VaultSetup({ signerAddress, privateKey, onReady }: Vault
             value={allowedProviders}
             onChange={(e) => setAllowedProviders(e.target.value)}
             placeholder="0xabc..., 0xdef..."
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-mono text-sm"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-mono text-sm"
             disabled={loading}
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Leave empty to allow all recipients.
           </p>
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">
+          <label className="block text-sm text-slate-500 mb-2">
             Blacklist (Optional)
           </label>
           <input
@@ -370,33 +370,33 @@ export default function VaultSetup({ signerAddress, privateKey, onReady }: Vault
             value={blockedProviders}
             onChange={(e) => setBlockedProviders(e.target.value)}
             placeholder="0xabc..., 0xdef..."
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-mono text-sm"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-mono text-sm"
             disabled={loading}
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Blacklisted recipients are always blocked.
           </p>
         </div>
 
-        <div className="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
-          <div className="text-xs text-gray-400 mb-1">Executor</div>
-          <div className="text-xs font-mono text-blue-400 break-all">
+        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <div className="text-xs text-slate-500 mb-1">Executor</div>
+          <div className="text-xs font-mono text-blue-600 break-all">
             {executorAddress || 'Not configured'}
           </div>
         </div>
 
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-slate-500">
           This vault spends from your AA wallet balance. Approve the vault after creation.
         </p>
 
         {step && (
-          <div className="text-sm text-blue-300 bg-blue-900/20 p-3 rounded border border-blue-800">
+          <div className="text-sm text-blue-700 bg-blue-50 p-3 rounded-xl border border-blue-200">
             {step}
           </div>
         )}
 
         {error && (
-          <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-800">
+          <div className="text-rose-600 text-sm bg-rose-50 p-3 rounded-xl border border-rose-200">
             {error}
           </div>
         )}
@@ -404,7 +404,7 @@ export default function VaultSetup({ signerAddress, privateKey, onReady }: Vault
         <button
           onClick={handleCreate}
           disabled={loading || !tokenAddress}
-          className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-semibold"
+          className="w-full btn-secondary"
         >
           {loading ? 'Setting up...' : 'Create Vault & Authorize'}
         </button>

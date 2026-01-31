@@ -4,9 +4,16 @@ import { useEffect, useState } from 'react';
 import { ethers, BigNumberish } from 'ethers';
 import { formatAddress } from '@/lib/wallet';
 import { SpendingRule } from '@/types';
+import VaultConfig from './VaultConfig';
+import VaultApproval from './VaultApproval';
+import VaultExecutor from './VaultExecutor';
 
 interface VaultInfoProps {
   vaultAddress: string;
+  aaWalletAddress?: string;
+  privateKey?: string;
+  onExecutorStatusChange?: (authorized: boolean) => void;
+  refreshTrigger?: number;
 }
 
 interface VaultData {
@@ -19,6 +26,8 @@ interface VaultData {
   spendingRules: SpendingRule[];
   tokenBalance: string;
   allowance?: string;
+  allowanceRaw?: string;
+  currentBudget?: string;
   tokenMeta?: {
     symbol?: string;
     decimals?: number;
@@ -29,11 +38,26 @@ interface VaultData {
   };
 }
 
-export default function VaultInfo({ vaultAddress }: VaultInfoProps) {
+export default function VaultInfo({
+  vaultAddress,
+  aaWalletAddress = '',
+  privateKey = '',
+  onExecutorStatusChange,
+  refreshTrigger
+}: VaultInfoProps) {
   const [vaultData, setVaultData] = useState<VaultData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
+  const [showRuleEditor, setShowRuleEditor] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [pendingTokenAddress, setPendingTokenAddress] = useState('');
+  const [pendingTokenError, setPendingTokenError] = useState('');
+  const [approveTokenAddress, setApproveTokenAddress] = useState('');
+  const [showExecutorModal, setShowExecutorModal] = useState(false);
+  const [remainingBudget, setRemainingBudget] = useState<string | null>(null);
+  const [remainingBudgetSymbol, setRemainingBudgetSymbol] = useState<string | null>(null);
 
   const fetchVaultInfo = async (showRefreshing = false) => {
     try {
@@ -53,6 +77,9 @@ export default function VaultInfo({ vaultAddress }: VaultInfoProps) {
         setError(data.error);
       }
       setVaultData(data);
+      if (typeof data?.executor?.authorized === 'boolean') {
+        onExecutorStatusChange?.(Boolean(data.executor.authorized));
+      }
     } catch (error) {
       console.error('Error fetching vault info:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch vault info');
@@ -69,6 +96,48 @@ export default function VaultInfo({ vaultAddress }: VaultInfoProps) {
     const interval = setInterval(() => fetchVaultInfo(true), 15000);
     return () => clearInterval(interval);
   }, [vaultAddress]);
+
+  useEffect(() => {
+    if (!vaultAddress) return;
+    if (typeof refreshTrigger === 'number') {
+      fetchVaultInfo(true);
+    }
+  }, [refreshTrigger, vaultAddress]);
+
+  useEffect(() => {
+    if (!vaultAddress) return;
+    let cancelled = false;
+
+    const fetchActivitySummary = async () => {
+      try {
+        const res = await fetch(`/api/vault/activity?address=${vaultAddress}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        if (data && typeof data.remainingBudget !== 'undefined') {
+          setRemainingBudget(data.remainingBudget);
+          setRemainingBudgetSymbol(data.tokenSymbol || null);
+        } else {
+          setRemainingBudget(null);
+          setRemainingBudgetSymbol(null);
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    fetchActivitySummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [vaultAddress, refreshTrigger]);
+
+  useEffect(() => {
+    if (vaultData?.executor) {
+      onExecutorStatusChange?.(Boolean(vaultData.executor.authorized));
+    }
+  }, [vaultData?.executor?.authorized, onExecutorStatusChange]);
 
   const formatTimeWindow = (seconds: BigNumberish) => {
     const hours = Number(seconds) / 3600;
@@ -91,14 +160,34 @@ export default function VaultInfo({ vaultAddress }: VaultInfoProps) {
     return num.toFixed(6);
   };
 
+  const tokenSymbol = vaultData?.tokenMeta?.symbol || 'KITE';
+  const tokenBalanceValue = Number(vaultData?.tokenBalance || 0);
+  const allowanceValue = Number(vaultData?.allowance || 0);
+  const availableValue = Number.isFinite(allowanceValue)
+    ? Math.min(tokenBalanceValue || 0, allowanceValue)
+    : tokenBalanceValue || 0;
+  const executorAuthorized = Boolean(vaultData?.executor?.authorized);
+  const isDeployed = Boolean(vaultData?.vault?.admin);
+  const deploymentLabel = isDeployed ? 'Deployed' : 'Not Deployed';
+  const isMaxAllowance = vaultData?.allowanceRaw === ethers.MaxUint256.toString();
+  const allowanceDisplay = isMaxAllowance
+    ? 'Follow spending rules'
+    : `${formatAmount(vaultData?.allowance || '0')} ${tokenSymbol}`;
+  const needsApproval = !Number.isFinite(allowanceValue) || allowanceValue <= 0;
+  const currentBudgetDisplay = vaultData?.currentBudget
+    ? `${vaultData.currentBudget} ${tokenSymbol}`
+    : remainingBudget
+      ? `${remainingBudget} ${remainingBudgetSymbol || tokenSymbol}`
+      : null;
+
   if (loading) {
     return (
-      <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+      <div className="card-soft p-6">
         <div className="animate-pulse flex space-x-4">
           <div className="flex-1 space-y-4">
-            <div className="h-4 bg-zinc-800 rounded w-3/4"></div>
-            <div className="h-4 bg-zinc-800 rounded w-1/2"></div>
-            <div className="h-4 bg-zinc-800 rounded w-5/6"></div>
+            <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+            <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+            <div className="h-4 bg-slate-200 rounded w-5/6"></div>
           </div>
         </div>
       </div>
@@ -107,8 +196,8 @@ export default function VaultInfo({ vaultAddress }: VaultInfoProps) {
 
   if (!vaultData) {
     return (
-      <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-        <p className="text-gray-400">
+      <div className="card-soft p-6">
+        <p className="text-slate-500">
           {error || 'Failed to load vault information'}
         </p>
       </div>
@@ -116,174 +205,306 @@ export default function VaultInfo({ vaultAddress }: VaultInfoProps) {
   }
 
   return (
-    <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+    <div className="card-soft p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Vault Information</h2>
-        <button
-          onClick={() => fetchVaultInfo(true)}
-          disabled={refreshing}
-          className="px-3 py-1 text-sm bg-zinc-700 hover:bg-zinc-600 disabled:bg-gray-700 rounded transition-colors"
-        >
-          {refreshing ? 'Refreshing...' : 'Refresh'}
-        </button>
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900">Vault</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`pill text-xs ${isDeployed ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-600 border border-[color:var(--pp-border)]'}`}>
+            {deploymentLabel}
+          </span>
+          <button
+            onClick={() => fetchVaultInfo(true)}
+            disabled={refreshing}
+            className="btn-tertiary text-xs px-2.5 py-1"
+            title="Refresh"
+          >
+            {refreshing ? '↻' : '⟳'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowDetails((prev) => !prev)}
+            className="btn-tertiary text-xs px-2.5 py-1"
+            title="Vault settings"
+          >
+            <span aria-hidden>⚙</span>
+          </button>
+        </div>
       </div>
 
+      {needsApproval && (
+        <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
+          <span>Vault allowance is zero. Approve the vault to enable spending.</span>
+          <button type="button" onClick={() => setShowApproveModal(true)} className="btn-secondary text-xs px-3 py-1">
+            Approve Vault
+          </button>
+        </div>
+      )}
+
       <div className="space-y-3">
+        <button
+          type="button"
+          onClick={() => {
+            if (!executorAuthorized) {
+              setShowExecutorModal(true);
+            }
+          }}
+          className={`w-full rounded-xl border border-[color:var(--pp-border)] bg-white/90 px-4 py-3 shadow-[var(--pp-shadow)] flex items-center justify-between gap-4 text-left transition-all duration-200 ease-out hover:bg-white ${executorAuthorized ? '' : 'cursor-pointer'}`}
+        >
+          <span className="text-sm text-slate-600 font-semibold">Authorize Status</span>
+          <span className={`text-sm font-mono ${executorAuthorized ? 'text-[#0F89C0]' : 'text-amber-600'}`}>
+            {executorAuthorized ? 'Authorized' : 'Not Authorized'}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setApproveTokenAddress('');
+            setShowApproveModal(true);
+          }}
+          className="w-full rounded-xl border border-[color:var(--pp-border)] bg-white/90 px-4 py-3 shadow-[var(--pp-shadow)] flex items-center justify-between gap-4 text-left transition-all duration-200 ease-out hover:bg-white"
+          title="Click to approve"
+        >
+          <span className="text-sm text-slate-600 font-semibold">{tokenSymbol} Allowance</span>
+          <span className="text-sm text-slate-700 font-mono">{allowanceDisplay}</span>
+        </button>
         {error && (
-          <div className="text-yellow-400 text-sm bg-yellow-900/20 p-3 rounded border border-yellow-800">
+          <div className="text-amber-700 text-sm bg-amber-50 p-3 rounded-xl border border-amber-200">
             {error}
           </div>
         )}
 
-        {vaultData.allowance && Number(vaultData.allowance) === 0 && (
-          <div className="text-yellow-300 text-xs bg-yellow-900/20 p-3 rounded border border-yellow-800">
-            Vault allowance is zero. Approve the vault to spend from your AA wallet.
-          </div>
-        )}
-
         {vaultData.tokenBalance && Number(vaultData.tokenBalance) === 0 && (
-          <div className="text-yellow-300 text-xs bg-yellow-900/20 p-3 rounded border border-yellow-800">
+          <div className="text-amber-700 text-xs bg-amber-50 p-3 rounded-xl border border-amber-200">
             AA wallet has zero token balance. Fund the AA wallet first.
           </div>
         )}
 
-        {vaultAddress && (
-          <InfoRow
-            label="Vault Address"
-            value={vaultAddress}
-            fullValue={vaultAddress}
-            valueClassName="break-all"
-          />
-        )}
-
-        {vaultData.vault && (
-          <InfoRow
-            label="Settlement Token"
-            value={formatAddress(vaultData.vault.settlementToken)}
-            fullValue={vaultData.vault.settlementToken}
-          />
-        )}
-
-        {vaultData.vault?.spendingAccount && (
-          <InfoRow
-            label="Spending Account"
-            value={formatAddress(vaultData.vault.spendingAccount)}
-            fullValue={vaultData.vault.spendingAccount}
-          />
-        )}
-
-        {vaultData.vault && (
-          <InfoRow
-            label="Owner"
-            value={formatAddress(vaultData.vault.admin)}
-            fullValue={vaultData.vault.admin}
-          />
-        )}
-
-        {vaultData.vault && (
-          <InfoRow
-            label="ETH Balance"
-            value={`${parseFloat(vaultData.vault.balance).toFixed(6)} ETH`}
-          />
-        )}
-
-        <InfoRow
-          label="AA Wallet Token Balance"
-          value={`${formatAmount(vaultData.tokenBalance)} ${vaultData.tokenMeta?.symbol || 'KITE'}`}
-        />
-
-        {vaultData.allowance && (
-          <InfoRow
-            label="Vault Allowance"
-            value={`${formatAmount(vaultData.allowance)} ${vaultData.tokenMeta?.symbol || 'KITE'}`}
-          />
-        )}
-
-        {vaultData.executor?.address && (
-          <InfoRow
-            label="Executor"
-            value={
-              <span className={vaultData.executor.authorized ? 'text-green-400' : 'text-yellow-400'}>
-                {vaultData.executor.authorized ? 'Authorized' : 'Not Authorized'}
-              </span>
-            }
-          />
-        )}
-
         {vaultData.spendingRules && vaultData.spendingRules.length > 0 && (
-          <div className="pt-3 border-t border-zinc-800">
-            <h3 className="text-sm font-semibold text-gray-300 mb-2">Spending Rules</h3>
-            <div className="space-y-2">
+          <div className="pt-3 border-t border-slate-200">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-semibold text-slate-700">Spending Rules</h3>
+              <span className="pill bg-white text-slate-500 border border-[color:var(--pp-border)] text-xs">
+                {vaultData.spendingRules.length} rule{vaultData.spendingRules.length > 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="space-y-3">
               {vaultData.spendingRules.map((rule, index) => (
-                <div key={index} className="bg-zinc-800 p-3 rounded border border-zinc-700">
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="col-span-2">
-                      <span className="text-gray-400">Rule Token:</span>
-                      <span className="ml-2 text-cyan-300 font-mono text-xs">
-                        {formatAddress(rule.token)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Budget:</span>
-                      <span className="ml-2 text-green-400 font-mono">
-                        {formatBudget(rule.budget)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Time Window:</span>
-                      <span className="ml-2 text-blue-400 font-mono">
-                        {formatTimeWindow(rule.timeWindow)}
-                      </span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-gray-400">Start Time:</span>
-                      <span className="ml-2 text-yellow-400 font-mono text-xs">
-                        {formatTimestamp(rule.initialWindowStartTime)}
-                      </span>
-                    </div>
-                    {rule.whitelist && rule.whitelist.length > 0 && (
-                      <div className="col-span-2">
-                        <span className="text-gray-400">Whitelist:</span>
-                        <div className="ml-2 mt-1 space-y-1">
-                          {rule.whitelist.map((provider, idx) => (
-                            <div key={idx} className="font-mono text-xs text-purple-400">
-                              {formatAddress(provider)}
-                            </div>
-                          ))}
+                <div key={index} className="bg-white/90 p-4 rounded-xl border border-[color:var(--pp-border)] shadow-[var(--pp-shadow)]">
+                  <div className="grid gap-6 text-base md:grid-cols-2">
+                    <div className="space-y-4">
+                      <div className="min-h-[56px]">
+                        <span className="text-slate-600">Rule Token</span>
+                        <div className="mt-1 min-h-[28px] font-mono text-base text-slate-700">{formatAddress(rule.token)}</div>
+                      </div>
+                      <div className="min-h-[56px]">
+                        <span className="text-slate-600">Budget</span>
+                        <div className="mt-1 min-h-[28px] font-mono text-base text-slate-700">
+                          {formatBudget(rule.budget)}
                         </div>
                       </div>
-                    )}
-                    {(!rule.whitelist || rule.whitelist.length === 0) && (
-                      <div className="col-span-2">
-                        <span className="text-gray-400">Whitelist:</span>
-                        <span className="ml-2 text-green-400">All recipients allowed</span>
-                      </div>
-                    )}
-                    {rule.blacklist && rule.blacklist.length > 0 && (
-                      <div className="col-span-2">
-                        <span className="text-gray-400">Blacklist:</span>
-                        <div className="ml-2 mt-1 space-y-1">
-                          {rule.blacklist.map((provider, idx) => (
-                            <div key={idx} className="font-mono text-xs text-red-400">
-                              {formatAddress(provider)}
-                            </div>
-                          ))}
+                      <div className="min-h-[56px]">
+                        <span className="text-slate-600">Start Time</span>
+                        <div className="mt-1 min-h-[28px] font-mono text-base text-slate-700">
+                          {formatTimestamp(rule.initialWindowStartTime)}
                         </div>
                       </div>
-                    )}
-                    {(!rule.blacklist || rule.blacklist.length === 0) && (
-                      <div className="col-span-2">
-                        <span className="text-gray-400">Blacklist:</span>
-                        <span className="ml-2 text-gray-500">None</span>
+                      <div className="min-h-[56px]">
+                        <span className="text-slate-600">Time Window</span>
+                        <div className="mt-1 min-h-[28px] font-mono text-base text-slate-700">
+                          {formatTimeWindow(rule.timeWindow)}
+                        </div>
                       </div>
-                    )}
+                    </div>
+                    <div className="space-y-4">
+                      <div className="min-h-[56px] flex items-start">
+                        <button
+                          type="button"
+                          onClick={() => setShowRuleEditor(true)}
+                          className="btn-secondary text-xs px-3 py-1"
+                        >
+                          Change Rules
+                        </button>
+                      </div>
+                      <div className="min-h-[56px]">
+                        <span className="text-slate-600">Current Budget</span>
+                        <div className="mt-1 min-h-[28px] font-mono text-base text-slate-700">
+                          {currentBudgetDisplay && index === 0
+                            ? currentBudgetDisplay
+                            : formatBudget(rule.budget)}
+                        </div>
+                      </div>
+                      <div className="min-h-[56px]">
+                        <span className="text-slate-600">Whitelist</span>
+                        {rule.whitelist && rule.whitelist.length > 0 ? (
+                          <div className="mt-1 space-y-1">
+                            {rule.whitelist.map((provider, idx) => (
+                              <div key={idx} className="min-h-[28px] font-mono text-base text-slate-700">
+                                {formatAddress(provider)}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-1 min-h-[28px] text-base text-slate-700">All recipients allowed</div>
+                        )}
+                      </div>
+                      <div className="min-h-[56px]">
+                        <span className="text-slate-600">Blacklist</span>
+                        {rule.blacklist && rule.blacklist.length > 0 ? (
+                          <div className="mt-1 space-y-1">
+                            {rule.blacklist.map((provider, idx) => (
+                              <div key={idx} className="min-h-[28px] font-mono text-base text-slate-700">
+                                {formatAddress(provider)}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-1 min-h-[28px] text-base text-slate-700">None</div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         )}
+        {showDetails && (
+          <div className="mt-3 rounded-xl border border-[color:var(--pp-border)] bg-white/90 p-4 shadow-[var(--pp-shadow)]">
+            <div className="flex items-center justify-between">
+              <div className="text-xs uppercase tracking-[0.16em] text-slate-600 font-semibold">Vault Settings</div>
+              <button
+                type="button"
+                onClick={() => setShowDetails(false)}
+                className="btn-tertiary text-xs px-2.5 py-1"
+              >
+                Hide
+              </button>
+            </div>
+            <div className="mt-3 space-y-2">
+              {vaultAddress && (
+                <InfoRow
+                  label="Vault Address"
+                  value={formatAddress(vaultAddress)}
+                  fullValue={vaultAddress}
+                  valueClassName="break-all"
+                />
+              )}
+              <div className="mt-2 rounded-lg border border-[color:var(--pp-border)] bg-white p-3">
+                <div className="text-xs uppercase tracking-[0.16em] text-slate-600 font-semibold mb-2">Add Token Allowance</div>
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    type="text"
+                    value={pendingTokenAddress}
+                    onChange={(e) => {
+                      setPendingTokenAddress(e.target.value);
+                      setPendingTokenError('');
+                    }}
+                    placeholder="0x..."
+                    className="flex-1 min-w-[220px] px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-mono text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const trimmed = pendingTokenAddress.trim();
+                      if (!trimmed || !ethers.isAddress(trimmed)) {
+                        setPendingTokenError('Enter a valid token address.');
+                        return;
+                      }
+                      setApproveTokenAddress(trimmed);
+                      setShowApproveModal(true);
+                    }}
+                    className="btn-tertiary px-3"
+                    title="Add token allowance"
+                  >
+                    +
+                  </button>
+                </div>
+                {pendingTokenError && (
+                  <div className="mt-2 text-xs text-rose-600">{pendingTokenError}</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+      {showExecutorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-sm px-4">
+          <div className="w-full max-w-3xl">
+            <div className="flex items-center justify-end mb-3">
+              <button
+                type="button"
+                onClick={() => setShowExecutorModal(false)}
+                className="btn-tertiary text-xs px-2.5 py-1"
+              >
+                Close
+              </button>
+            </div>
+            <VaultExecutor
+              vaultAddress={vaultAddress}
+              aaWalletAddress={aaWalletAddress}
+              privateKey={privateKey}
+              onAuthorized={(authorized) => {
+                setShowExecutorModal(false);
+                fetchVaultInfo(true);
+              }}
+            />
+          </div>
+        </div>
+      )}
+      {showRuleEditor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-sm px-4">
+          <div className="w-full max-w-2xl card-soft p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900">Change Spending Rules</h3>
+              <button
+                type="button"
+                onClick={() => setShowRuleEditor(false)}
+                className="btn-tertiary text-xs px-2.5 py-1"
+              >
+                Close
+              </button>
+            </div>
+            <VaultConfig
+              aaWalletAddress={aaWalletAddress}
+              privateKey={privateKey}
+              vaultAddress={vaultAddress}
+              onConfigured={() => {
+                setShowRuleEditor(false);
+                fetchVaultInfo(true);
+              }}
+              embedded
+              hideTitle
+            />
+          </div>
+        </div>
+      )}
+      {showApproveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-sm px-4">
+          <div className="w-full max-w-3xl">
+            <div className="flex items-center justify-end mb-3">
+              <button
+                type="button"
+                onClick={() => setShowApproveModal(false)}
+                className="btn-tertiary text-xs px-2.5 py-1"
+              >
+                Close
+              </button>
+            </div>
+            <VaultApproval
+              signerAddress={aaWalletAddress}
+              privateKey={privateKey}
+              vaultAddress={vaultAddress}
+              presetTokenAddress={approveTokenAddress || undefined}
+              onApproved={() => {
+                setShowApproveModal(false);
+                fetchVaultInfo(true);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -300,11 +521,11 @@ function InfoRow({
   valueClassName?: string;
 }) {
   return (
-    <div className="flex justify-between items-start py-2 border-b border-zinc-800 last:border-0">
-      <span className="text-gray-400 text-sm">{label}</span>
+    <div className="flex justify-between items-start py-2 border-b border-slate-200 last:border-0">
+      <span className="text-slate-500 text-sm">{label}</span>
       <div className="flex items-center gap-2 max-w-[70%]">
         <span
-          className={`text-right font-mono text-sm ${valueClassName || ''}`}
+          className={`text-right font-mono text-sm text-slate-700 ${valueClassName || ''}`}
           title={fullValue}
         >
           {value}
@@ -313,9 +534,10 @@ function InfoRow({
           <button
             type="button"
             onClick={() => navigator.clipboard?.writeText(fullValue)}
-            className="text-xs text-blue-300 hover:text-blue-200"
+            className="btn-tertiary px-2 py-0.5 text-xs"
+            title="Copy"
           >
-            Copy
+            ⧉
           </button>
         )}
       </div>

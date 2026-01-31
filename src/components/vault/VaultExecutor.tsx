@@ -129,32 +129,32 @@ export default function VaultExecutor({
   };
 
   return (
-    <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
-      <h2 className="text-xl font-semibold mb-4">Authorize AI Executor</h2>
+    <div className="card-soft p-6">
+      <h2 className="text-xl font-semibold mb-4 text-slate-900">Authorize AI Executor</h2>
 
       <div className="space-y-4">
-        <div className="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
-          <div className="text-xs text-gray-400 mb-1">Executor Address</div>
-          <div className="text-xs font-mono text-blue-400 break-all">
+        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <div className="text-xs text-slate-500 mb-1">Executor Address</div>
+          <div className="text-xs font-mono text-blue-600 break-all">
             {executorAddress ? formatAddress(executorAddress) : 'Not configured'}
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-sm">
-          <span className={`w-2 h-2 rounded-full ${authorized ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-          <span className="text-gray-300">
+          <span className={`w-2 h-2 rounded-full ${authorized ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+          <span className="text-slate-600">
             {authorized ? 'Executor authorized' : 'Executor not authorized'}
           </span>
         </div>
 
         {error && (
-          <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-800">
+          <div className="text-rose-600 text-sm bg-rose-50 p-3 rounded-xl border border-rose-200">
             {error}
           </div>
         )}
 
         {txHash && (
-          <div className="text-green-400 text-sm bg-green-900/20 p-3 rounded border border-green-800">
+          <div className="text-emerald-600 text-sm bg-emerald-50 p-3 rounded-xl border border-emerald-200">
             <div className="font-semibold mb-1">Authorization Successful!</div>
             <div className="font-mono text-xs break-all">
               Hash: {txHash}
@@ -165,12 +165,12 @@ export default function VaultExecutor({
         <button
           onClick={handleAuthorize}
           disabled={loading || authorized || !executorAddress}
-          className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-semibold"
+          className="w-full btn-secondary"
         >
           {loading ? 'Authorizing...' : authorized ? 'Already Authorized' : 'Authorize Executor'}
         </button>
 
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-slate-500">
           This is a one-time approval. After this, AI can execute within the vault rules without prompting you again.
         </p>
       </div>

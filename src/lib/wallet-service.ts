@@ -162,7 +162,8 @@ export class AAWalletService {
     amount: string,
     privateKey: string,
     tokenDecimals = 18,
-    useMax = false
+    useMax = false,
+    usePaymaster = false
   ): Promise<TransactionResult> {
     try {
       const signFunction = createSignFunction(privateKey);
@@ -176,6 +177,21 @@ export class AAWalletService {
         callData
       };
 
+      if (usePaymaster) {
+        const estimate = await this.sdk.estimateUserOperation(signerAddress, request);
+        const tokenForPayment = estimate.sponsorshipAvailable
+          ? '0x0000000000000000000000000000000000000000'
+          : KITE_CONTRACTS.SETTLEMENT_TOKEN;
+        const result = await this.sdk.sendUserOperationWithPayment(
+          signerAddress,
+          request,
+          estimate.userOp,
+          tokenForPayment,
+          signFunction
+        );
+        return result;
+      }
+
       const result = await this.sdk.sendUserOperationAndWait(
         signerAddress,
         request,
@@ -183,6 +199,60 @@ export class AAWalletService {
       );
 
       return result;
+    } catch (error) {
+      return {
+        status: {
+          status: 'failed',
+          reason: error instanceof Error ? error.message : 'Unknown error'
+        }
+      };
+    }
+  }
+
+  /**
+   * Register a supported token in the AA wallet
+   */
+  async addSupportedToken(
+    signerAddress: string,
+    tokenAddress: string,
+    privateKey: string
+  ): Promise<TransactionResult> {
+    try {
+      const signFunction = createSignFunction(privateKey);
+      const aaWalletAddress = this.getAAWalletAddress(signerAddress);
+      const accountInterface = new ethers.Interface(['function addSupportedToken(address token)']);
+      const callData = accountInterface.encodeFunctionData('addSupportedToken', [tokenAddress]);
+
+      const sdkAny = this.sdk as any;
+      const request = { target: aaWalletAddress, value: 0n, callData };
+      const userOp = await sdkAny.createUserOperation(
+        signerAddress,
+        request,
+        undefined,
+        '0x0000000000000000000000000000000000000000'
+      );
+
+      const packAccountGasLimits = (verificationGasLimit: bigint, callGasLimit: bigint) => {
+        const uint128Max = (BigInt(1) << BigInt(128)) - BigInt(1);
+        if (verificationGasLimit > uint128Max || callGasLimit > uint128Max) {
+          throw new Error('Gas limit exceeds uint128 maximum');
+        }
+        const verificationHex = verificationGasLimit.toString(16).padStart(32, '0');
+        const callHex = callGasLimit.toString(16).padStart(32, '0');
+        return `0x${verificationHex}${callHex}`;
+      };
+
+      // Raise verification gas for addSupportedToken (AA26 mitigation)
+      userOp.accountGasLimits = packAccountGasLimits(1_500_000n, 500_000n);
+      userOp.preVerificationGas = 1_200_000n;
+
+      const userOpHash = await this.sdk.getUserOpHash(userOp);
+      const signature = await signFunction(userOpHash);
+      userOp.signature = signature;
+
+      const opHash = await sdkAny.provider.sendUserOperation(userOp, sdkAny.config.entryPoint);
+      const status = await this.sdk.pollUserOperationStatus(opHash);
+      return { userOpHash: opHash, status };
     } catch (error) {
       return {
         status: {

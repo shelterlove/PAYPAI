@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
       amount,
       privateKey,
       tokenDecimals,
-      useMax
+      useMax,
+      usePaymaster
     } = body;
 
     if (!signerAddress || !tokenAddress || !spender || !privateKey) {
@@ -49,7 +50,8 @@ export async function POST(request: NextRequest) {
       amount || '0',
       privateKey,
       decimals,
-      Boolean(useMax)
+      Boolean(useMax),
+      Boolean(usePaymaster)
     );
 
     return NextResponse.json(result);

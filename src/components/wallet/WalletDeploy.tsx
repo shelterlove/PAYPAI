@@ -43,31 +43,31 @@ export default function WalletDeploy({ signerAddress, privateKey, onDeployed }: 
   };
 
   return (
-    <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 p-6 rounded-lg border border-purple-700">
+    <div className="card-soft p-6">
       <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
+        <div className="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white">
           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
         </div>
 
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-white mb-2">
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">
             Deploy Your AA Wallet
           </h3>
-          <p className="text-sm text-gray-300 mb-4">
+          <p className="text-sm text-slate-500 mb-4">
             Your AA wallet address is ready but needs to be deployed on-chain before you can use it.
             Click the button below to deploy.
           </p>
 
           {error && (
-            <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-800 mb-4">
+            <div className="text-rose-600 text-sm bg-rose-50 p-3 rounded-xl border border-rose-200 mb-4">
               {error}
             </div>
           )}
 
           {txHash && (
-            <div className="text-green-400 text-sm bg-green-900/20 p-3 rounded border border-green-800 mb-4">
+            <div className="text-emerald-600 text-sm bg-emerald-50 p-3 rounded-xl border border-emerald-200 mb-4">
               <div className="font-semibold mb-1">✓ Deployment Successful!</div>
               <div className="font-mono text-xs break-all">
                 Hash: {txHash}
@@ -78,7 +78,7 @@ export default function WalletDeploy({ signerAddress, privateKey, onDeployed }: 
           <button
             onClick={handleDeploy}
             disabled={loading}
-            className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-all font-semibold flex items-center justify-center gap-2"
+            className="w-full btn-secondary"
           >
             {loading ? (
               <>
@@ -93,7 +93,7 @@ export default function WalletDeploy({ signerAddress, privateKey, onDeployed }: 
             )}
           </button>
 
-          <p className="text-xs text-gray-400 mt-3 text-center">
+          <p className="text-xs text-slate-500 mt-3 text-center">
             ⚡ Gasless transaction via Bundler • First transaction deploys your wallet
           </p>
         </div>
