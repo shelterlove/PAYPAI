@@ -184,7 +184,7 @@ export default function RecentActivity({
     return (
       <div className="mt-3 space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-slate-600 dark:text-slate-500">
             {showError
               ? 'Unable to load recent activity.'
               : syncing || loading
@@ -193,7 +193,7 @@ export default function RecentActivity({
                   ? 'Latest AA wallet activity.'
                   : 'No recent transactions yet. Your next action will appear here.'}
             {lastSynced && (
-              <div className="mt-1 text-xs text-slate-400">
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Last synced: {new Date(lastSynced).toLocaleString()}
               </div>
             )}
@@ -209,11 +209,10 @@ export default function RecentActivity({
               ⟳
             </button>
             <span
-              className={`pill text-slate-700 ${
-                syncing || loading
-                  ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                  : 'bg-slate-100 text-slate-600'
-              }`}
+              className={`pill ${syncing || loading
+                  ? 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30'
+                  : 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300'
+                }`}
             >
               {statusLabel}
             </span>
@@ -245,11 +244,10 @@ export default function RecentActivity({
           )}
         </div>
         <span
-          className={`pill text-slate-700 ${
-            syncing || loading
+          className={`pill text-slate-700 ${syncing || loading
               ? 'bg-amber-100 text-amber-700 border border-amber-200'
               : 'bg-slate-100 text-slate-600'
-          }`}
+            }`}
         >
           {statusLabel}
         </span>
