@@ -6,13 +6,14 @@ import { useWalletClient, useAccount } from 'wagmi';
 import { formatAddress } from '@/lib/wallet';
 import { createWalletClientSignFunction } from '@/lib/wallet-client';
 import { kiteTestnetChain } from '@/lib/wagmi';
-import { AAWallet } from '@/types';
+import { AAWallet, KITE_CONTRACTS } from '@/types';
 import RecentActivity from '@/components/vault/RecentActivity';
 
 interface WalletInfoProps {
   signerAddress: string;
   privateKey: string;
   onDeploymentStatusChange?: (deployed: boolean) => void;
+  onFundingStatusChange?: (funded: boolean) => void;
   aaWalletAddress?: string;
   refreshTrigger?: number;
 }
@@ -23,12 +24,24 @@ interface WalletData {
   signerBalance: string;
 }
 
-export default function WalletInfo({ signerAddress, privateKey, onDeploymentStatusChange, refreshTrigger }: WalletInfoProps) {
+export default function WalletInfo({
+  signerAddress,
+  privateKey,
+  onDeploymentStatusChange,
+  onFundingStatusChange,
+  refreshTrigger
+}: WalletInfoProps) {
   const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [fundingAmount, setFundingAmount] = useState('0.01');
   const [funding, setFunding] = useState(false);
+  const [showFundModal, setShowFundModal] = useState(false);
+  const [fundToken, setFundToken] = useState<{
+    symbol: string;
+    address?: string;
+    isNative: boolean;
+  } | null>(null);
   const [deploying, setDeploying] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [tokenAddressInput, setTokenAddressInput] = useState('');
@@ -48,6 +61,7 @@ export default function WalletInfo({ signerAddress, privateKey, onDeploymentStat
   ]);
   const [showAddToken, setShowAddToken] = useState(true);
   const [showRecentActivity, setShowRecentActivity] = useState(false);
+  const [tokenRefreshTick, setTokenRefreshTick] = useState(0);
 
   // Get wagmi connection status
   const { isConnected } = useAccount();
@@ -83,6 +97,7 @@ export default function WalletInfo({ signerAddress, privateKey, onDeploymentStat
 
       const data = await response.json();
       setWalletData(data);
+      setTokenRefreshTick((prev) => prev + 1);
 
       // Notify parent component about deployment status
       if (onDeploymentStatusChange) {
@@ -259,6 +274,80 @@ export default function WalletInfo({ signerAddress, privateKey, onDeploymentStat
     }
   };
 
+  const handleFundToken = async (tokenAddress: string) => {
+    if (!walletData) return;
+
+    try {
+      setFunding(true);
+      const hasPrivateKey = privateKey && privateKey.length > 0;
+      const hasWalletClient = isConnected && walletClient && !isWalletClientLoading;
+      const decimals =
+        tokenAddress.toLowerCase() === KITE_CONTRACTS.SETTLEMENT_TOKEN.toLowerCase()
+          ? KITE_CONTRACTS.SETTLEMENT_TOKEN_DECIMALS
+          : 18;
+
+      if (hasPrivateKey) {
+        const response = await fetch('/api/wallet/send-erc20-eoa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            signerAddress,
+            recipient: walletData.wallet.address,
+            amount: fundingAmount,
+            privateKey,
+            tokenAddress,
+            tokenDecimals: decimals
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          alert(`Successfully funded ${fundingAmount} tokens to AA wallet!`);
+          fetchWalletInfo();
+        } else {
+          alert(`Funding failed: ${result.error || 'Unknown error'}`);
+        }
+      } else if (hasWalletClient) {
+        const erc20 = new ethers.Interface(['function transfer(address to, uint256 amount)']);
+        const callData = erc20.encodeFunctionData('transfer', [
+          walletData.wallet.address,
+          ethers.parseUnits(fundingAmount, decimals)
+        ]);
+        const hash = await walletClient.sendTransaction({
+          account: signerAddress as `0x${string}`,
+          to: tokenAddress as `0x${string}`,
+          data: callData
+        });
+
+        alert(`Funding submitted: ${hash}`);
+        fetchWalletInfo();
+      } else {
+        alert('Wallet not connected. Please reconnect and try again.');
+      }
+    } catch (error) {
+      alert('Failed to fund token');
+      console.error(error);
+    } finally {
+      setFunding(false);
+    }
+  };
+
+  const openFundModal = (symbol: string, address?: string, isNative = false) => {
+    setFundToken({ symbol, address, isNative });
+    setShowFundModal(true);
+  };
+
+  const submitFund = async () => {
+    if (!fundToken) return;
+    if (fundToken.isNative) {
+      await handleFund();
+    } else if (fundToken.address) {
+      await handleFundToken(fundToken.address);
+    }
+    setShowFundModal(false);
+  };
+
   const tokenKey = importedTokens.map((token) => token.address.toLowerCase()).join('|');
 
   const handleAddToken = async () => {
@@ -383,7 +472,20 @@ export default function WalletInfo({ signerAddress, privateKey, onDeploymentStat
     return () => {
       cancelled = true;
     };
-  }, [walletData?.wallet?.address, refreshTrigger, tokenKey]);
+  }, [walletData?.wallet?.address, refreshTrigger, tokenKey, tokenRefreshTick]);
+
+  const aaBalance = Number(walletData?.balance ?? 0);
+  const deploymentLabel = walletData?.wallet?.isDeployed ? 'Deployed' : 'Not Deployed';
+  const aaWalletAddress = walletData?.wallet?.address || '';
+  const usdtToken = importedTokens.find((token) => token.name.toUpperCase() === 'USDT');
+  const usdtBalance = usdtToken ? Number(usdtToken.balance) : 0;
+  const safeUsdtBalance = Number.isFinite(usdtBalance) ? usdtBalance : 0;
+  const isWalletFunded = Boolean(walletData?.wallet?.isDeployed) && (aaBalance >= 0.001 || safeUsdtBalance > 0);
+  const isLowBalance = Boolean(walletData?.wallet?.isDeployed) && !isWalletFunded;
+
+  useEffect(() => {
+    onFundingStatusChange?.(isWalletFunded);
+  }, [isWalletFunded, onFundingStatusChange]);
 
   if (loading) {
     return (
@@ -407,10 +509,6 @@ export default function WalletInfo({ signerAddress, privateKey, onDeploymentStat
     );
   }
 
-  const aaBalance = Number(walletData.balance);
-  const deploymentLabel = walletData.wallet.isDeployed ? 'Deployed' : 'Not Deployed';
-  const aaWalletAddress = walletData.wallet?.address || '';
-
   return (
     <div id="wallet-info" className="card-soft p-6">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
@@ -424,25 +522,48 @@ export default function WalletInfo({ signerAddress, privateKey, onDeploymentStat
           <button
             onClick={() => fetchWalletInfo(true)}
             disabled={refreshing}
-            className="btn-tertiary text-xs px-2.5 py-1"
+            className="btn-tertiary text-base px-3.5 py-1.5"
             title="Refresh"
           >
-            {refreshing ? '↻' : '⟳'}
+            <span className="text-lg leading-none">{refreshing ? '↻' : '⟳'}</span>
           </button>
           <button
             type="button"
             onClick={() => setShowDetails((prev) => !prev)}
-            className="btn-tertiary text-xs px-2.5 py-1"
+            className="btn-tertiary text-base px-3.5 py-1.5"
             title="Wallet settings"
           >
-            <span aria-hidden>⚙</span>
+            <span className="text-lg leading-none" aria-hidden>⚙</span>
           </button>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-xl border border-[color:var(--pp-border)] bg-white/90 p-4 shadow-[var(--pp-shadow)] min-h-[92px] flex flex-col justify-center">
-          <div className="text-xs uppercase tracking-[0.08em] text-slate-600 font-semibold">KITE</div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="text-xs uppercase tracking-[0.08em] text-slate-600 font-semibold">KITE</div>
+              <a
+                href="https://faucet.gokite.ai/"
+                target="_blank"
+                rel="noreferrer"
+                className="btn-tertiary px-2 py-0.5 text-xs"
+                title="Open KITE faucet"
+                aria-label="Open KITE faucet"
+              >
+                ⛲
+              </a>
+            </div>
+            <button
+              type="button"
+              onClick={() => openFundModal('KITE', undefined, true)}
+              disabled={funding || !walletData?.wallet.isDeployed}
+              className="btn-tertiary px-2 py-0.5 text-xs"
+              title="Fund KITE"
+            >
+              Fund
+            </button>
+          </div>
           <div className="metric mt-2">{Number.isFinite(aaBalance) ? aaBalance.toFixed(6) : '0.000000'}</div>
         </div>
         {importedTokens.map((token) => (
@@ -450,7 +571,18 @@ export default function WalletInfo({ signerAddress, privateKey, onDeploymentStat
             key={token.address}
             className="rounded-xl border border-[color:var(--pp-border)] bg-white/90 p-4 shadow-[var(--pp-shadow)] min-h-[92px] flex flex-col justify-center"
           >
-            <div className="text-xs uppercase tracking-[0.08em] text-slate-600 font-semibold">{token.name}</div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs uppercase tracking-[0.08em] text-slate-600 font-semibold">{token.name}</div>
+              <button
+                type="button"
+                onClick={() => openFundModal(token.name, token.address, false)}
+                disabled={funding || !walletData?.wallet.isDeployed}
+                className="btn-tertiary px-2 py-0.5 text-xs"
+                title={`Fund ${token.name}`}
+              >
+                Fund
+              </button>
+            </div>
             <div className="metric mt-2">{Number.isFinite(Number(token.balance)) ? Number(token.balance).toFixed(6) : token.balance}</div>
           </div>
         ))}
@@ -538,29 +670,11 @@ export default function WalletInfo({ signerAddress, privateKey, onDeploymentStat
           </div>
         )}
 
-        {walletData.wallet.isDeployed && parseFloat(walletData.balance) < 0.001 && (
+        {walletData.wallet.isDeployed && isLowBalance && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-            <p className="text-sm text-blue-700 mb-3">
+            <p className="text-sm text-blue-700">
               Your AA wallet balance is low. Fund it to start transactions.
             </p>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                step="0.001"
-                min="0.001"
-                value={fundingAmount}
-                onChange={(e) => setFundingAmount(e.target.value)}
-                className="flex-1 px-3 py-2 bg-white border border-blue-200 rounded-lg text-slate-700 text-sm"
-                placeholder="Amount in KITE"
-              />
-              <button
-                onClick={handleFund}
-                disabled={funding || !fundingAmount}
-                className="btn-primary"
-              >
-                {funding ? 'Sending...' : 'Fund'}
-              </button>
-            </div>
           </div>
         )}
 
@@ -603,6 +717,51 @@ export default function WalletInfo({ signerAddress, privateKey, onDeploymentStat
             />
           )}
         </div>
+        {showFundModal && fundToken && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-sm px-4">
+            <div className="w-full max-w-md card-soft p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Fund {fundToken.symbol}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowFundModal(false)}
+                  className="btn-tertiary text-xs px-2.5 py-1"
+                >
+                  Close
+                </button>
+              </div>
+              <label className="block text-xs text-slate-500 mb-2">Amount</label>
+              <input
+                type="number"
+                step="0.001"
+                min="0.001"
+                value={fundingAmount}
+                onChange={(e) => setFundingAmount(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 text-sm"
+                placeholder={`Amount in ${fundToken.symbol}`}
+              />
+              <div className="mt-4 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFundModal(false)}
+                  className="btn-tertiary text-xs px-3 py-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={submitFund}
+                  disabled={funding || !fundingAmount}
+                  className="btn-primary text-xs px-3 py-1"
+                >
+                  {funding ? 'Funding...' : 'Fund'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

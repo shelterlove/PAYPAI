@@ -1,9 +1,14 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import sparkHackathonLogo from '../../images/spark_ai_hackthon.png';
+import kiteAiLogo from '../../images/kite_ai.png';
+import ethPandaLogo from '../../images/ETH_Panda.png';
+import lxDaoLogo from '../../images/lxdao.svg';
 
 const WalletConnect = dynamic(() => import('@/components/wallet/WalletConnect'), { ssr: false });
 const WalletInfo = dynamic(() => import('@/components/wallet/WalletInfo'), { ssr: false });
@@ -14,10 +19,12 @@ export default function Home() {
   const [privateKey, setPrivateKey] = useState<string>('');
   const [manualAddress, setManualAddress] = useState<string>('');
   const [isWalletDeployed, setIsWalletDeployed] = useState(false);
+  const [isWalletFunded, setIsWalletFunded] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [vaultAddress, setVaultAddress] = useState('');
   const [vaultExecutorReady, setVaultExecutorReady] = useState(false);
+  const [vaultAllowanceApproved, setVaultAllowanceApproved] = useState(false);
   const [useVault, setUseVault] = useState(true);
   const [showSetupSteps, setShowSetupSteps] = useState(true);
   const [stickyTop, setStickyTop] = useState(112);
@@ -181,19 +188,39 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="relative flex items-center justify-between gap-4 py-1.5">
-                    <span>2. Create & configure Vault</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${vaultAddress ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
-                      {vaultAddress ? 'Done' : 'Pending'}
+                    <span>2. Fund your AA wallet</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${isWalletFunded ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
+                      {isWalletFunded ? 'Done' : 'Pending'}
                     </span>
                   </div>
                   <div className="relative flex items-center justify-between gap-4 py-1.5">
-                    <span>3. Authorize automation</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${vaultExecutorReady ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
-                      {vaultExecutorReady ? 'Done' : 'Pending'}
+                    <span>3. Create and Authorize Vault</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs ${
+                        vaultAddress && vaultExecutorReady
+                          ? 'bg-[#5CD5DD]/20 text-[#0F89C0]'
+                          : vaultAddress
+                            ? 'bg-[#5A39BA]/10 text-[#5A39BA]'
+                            : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'
+                      }`}
+                    >
+                      {vaultAddress && vaultExecutorReady ? 'Done' : vaultAddress ? 'In progress' : 'Pending'}
                     </span>
                   </div>
                   <div className="relative flex items-center justify-between gap-4 py-1.5">
-                    <span>4. Execute via Agent</span>
+                    <span>4. Approve Vault Allowance</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs ${
+                        vaultAllowanceApproved
+                          ? 'bg-[#5CD5DD]/20 text-[#0F89C0]'
+                          : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'
+                      }`}
+                    >
+                      {vaultAllowanceApproved ? 'Done' : 'Pending'}
+                    </span>
+                  </div>
+                  <div className="relative flex items-center justify-between gap-4 py-1.5">
+                    <span>5. Execute via Agent</span>
                     <span className={`rounded-full px-2 py-0.5 text-xs ${vaultExecutorReady ? 'bg-[#5A39BA]/10 text-[#5A39BA]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
                       {vaultExecutorReady ? 'Ready' : 'Locked'}
                     </span>
@@ -207,21 +234,23 @@ export default function Home() {
               privateKey={effectivePrivateKey}
               refreshTrigger={refreshTrigger}
               onDeploymentStatusChange={setIsWalletDeployed}
+              onFundingStatusChange={setIsWalletFunded}
             />
 
             {isWalletDeployed && (
-              <VaultManager
-                aaWalletAddress={signerAddress}
-                privateKey={effectivePrivateKey}
-                onVaultReady={(address, executorReady) => {
-                  setVaultAddress(address);
-                  setVaultExecutorReady(executorReady);
-                }}
-                refreshTrigger={refreshTrigger}
-                onRefresh={() => setRefreshTrigger(prev => prev + 1)}
-                useVault={useVault}
-                vaultExecutorReady={vaultExecutorReady}
-              />
+            <VaultManager
+              aaWalletAddress={signerAddress}
+              privateKey={effectivePrivateKey}
+              onVaultReady={(address, executorReady) => {
+                setVaultAddress(address);
+                setVaultExecutorReady(executorReady);
+              }}
+              onAllowanceStatusChange={setVaultAllowanceApproved}
+              refreshTrigger={refreshTrigger}
+              onRefresh={() => setRefreshTrigger(prev => prev + 1)}
+              useVault={useVault}
+              vaultExecutorReady={vaultExecutorReady}
+            />
             )}
 
             {!isWalletDeployed && (
@@ -257,6 +286,55 @@ export default function Home() {
             )}
           </section>
         </div>
+
+        <footer className="mt-12 rounded-2xl border border-[color:var(--pp-border)] bg-white/80 p-6 shadow-[var(--pp-shadow)]">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="text-sm font-semibold text-slate-900">SPARK AI Hackathon</div>
+              <p className="mt-1 text-sm text-slate-500">
+                感谢赞助方 Kite AI 以及举办方 ETH Panda 与 LX Dao 的支持。
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-4">
+              <a
+                href="https://github.com/CasualHackathon/SPARK-AI-Hackathon"
+                target="_blank"
+                rel="noreferrer"
+                className="h-10 w-auto"
+                title="SPARK AI Hackathon"
+              >
+                <Image src={sparkHackathonLogo} alt="SPARK AI Hackathon" className="h-10 w-auto object-contain" />
+              </a>
+              <a
+                href="https://gokite.ai/"
+                target="_blank"
+                rel="noreferrer"
+                className="h-10 w-auto"
+                title="Kite AI"
+              >
+                <Image src={kiteAiLogo} alt="Kite AI" className="h-10 w-auto object-contain" />
+              </a>
+              <a
+                href="https://ethpanda.org/"
+                target="_blank"
+                rel="noreferrer"
+                className="h-10 w-auto"
+                title="ETH Panda"
+              >
+                <Image src={ethPandaLogo} alt="ETH Panda" className="h-10 w-auto object-contain" />
+              </a>
+              <a
+                href="https://lxdao.io/"
+                target="_blank"
+                rel="noreferrer"
+                className="h-10 w-auto"
+                title="LX Dao"
+              >
+                <Image src={lxDaoLogo} alt="LX Dao" className="h-10 w-auto object-contain" />
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
     </main>
   );

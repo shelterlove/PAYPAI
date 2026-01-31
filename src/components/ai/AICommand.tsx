@@ -528,12 +528,12 @@ export default function AICommand({
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to execute transaction';
-      setError(errorMsg);
+      setError('');
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: `Transaction failed. ${errorMsg}`,
+          content: errorMsg,
           kind: 'status',
           status: 'error'
         }

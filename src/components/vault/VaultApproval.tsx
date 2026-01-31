@@ -651,37 +651,39 @@ export default function VaultApproval({ signerAddress, privateKey, vaultAddress,
         </button>
 
         {(lastUserOpHash || lastSignature || lastErrorDetails || lastFailureStage || lastRecoveredPrefixed || lastRecoveredRaw) && (
-          <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <div className="font-semibold text-slate-700 mb-1">Debug (AA33)</div>
-            {lastFailureStage && (
-              <div>Stage: <span className="text-blue-600">{lastFailureStage}</span></div>
-            )}
-            {bundlerUrl && (
-              <div>Bundler URL: <span className="text-blue-600">{bundlerUrl}</span></div>
-            )}
-            <div>Paymaster: <span className="text-blue-600">{disablePaymaster ? 'disabled' : 'enabled'}</span></div>
-            {lastSignMethod && (
-              <div>Method: <span className="text-blue-600">{lastSignMethod}</span></div>
-            )}
-            {lastWalletAccount && (
-              <div>Wallet Account: <span className="text-blue-600">{lastWalletAccount}</span></div>
-            )}
-            {lastUserOpHash && (
-              <div className="font-mono break-all">userOpHash: {lastUserOpHash}</div>
-            )}
-            {lastSignature && (
-              <div className="font-mono break-all">signature: {lastSignature.slice(0, 18)}…</div>
-            )}
-            {lastRecoveredPrefixed && (
-              <div className="font-mono break-all">recovered (prefixed): {lastRecoveredPrefixed}</div>
-            )}
-            {lastRecoveredRaw && (
-              <div className="font-mono break-all">recovered (raw): {lastRecoveredRaw}</div>
-            )}
-            {lastErrorDetails && (
-              <div className="font-mono break-all">error: {lastErrorDetails}</div>
-            )}
-          </div>
+          <details className="text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <summary className="cursor-pointer font-semibold text-slate-700">Debug (AA33)</summary>
+            <div className="mt-2 space-y-1">
+              {lastFailureStage && (
+                <div>Stage: <span className="text-blue-600">{lastFailureStage}</span></div>
+              )}
+              {bundlerUrl && (
+                <div>Bundler URL: <span className="text-blue-600">{bundlerUrl}</span></div>
+              )}
+              <div>Paymaster: <span className="text-blue-600">{disablePaymaster ? 'disabled' : 'enabled'}</span></div>
+              {lastSignMethod && (
+                <div>Method: <span className="text-blue-600">{lastSignMethod}</span></div>
+              )}
+              {lastWalletAccount && (
+                <div>Wallet Account: <span className="text-blue-600">{lastWalletAccount}</span></div>
+              )}
+              {lastUserOpHash && (
+                <div className="font-mono break-all">userOpHash: {lastUserOpHash}</div>
+              )}
+              {lastSignature && (
+                <div className="font-mono break-all">signature: {lastSignature.slice(0, 18)}…</div>
+              )}
+              {lastRecoveredPrefixed && (
+                <div className="font-mono break-all">recovered (prefixed): {lastRecoveredPrefixed}</div>
+              )}
+              {lastRecoveredRaw && (
+                <div className="font-mono break-all">recovered (raw): {lastRecoveredRaw}</div>
+              )}
+              {lastErrorDetails && (
+                <div className="font-mono break-all">error: {lastErrorDetails}</div>
+              )}
+            </div>
+          </details>
         )}
 
         

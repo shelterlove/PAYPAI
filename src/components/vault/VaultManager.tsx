@@ -12,6 +12,7 @@ interface VaultManagerProps {
   aaWalletAddress: string;
   privateKey: string;
   onVaultReady?: (vaultAddress: string, executorAuthorized: boolean) => void;
+  onAllowanceStatusChange?: (approved: boolean) => void;
   refreshTrigger?: number;
   onRefresh?: () => void;
   useVault?: boolean;
@@ -22,6 +23,7 @@ export default function VaultManager({
   aaWalletAddress,
   privateKey,
   onVaultReady,
+  onAllowanceStatusChange,
   refreshTrigger,
   onRefresh,
   useVault,
@@ -48,6 +50,12 @@ export default function VaultManager({
       onVaultReady?.(vaultAddress, executorAuthorized);
     }
   }, [deploymentStatus?.deployed, vaultAddress, executorAuthorized, onVaultReady]);
+
+  useEffect(() => {
+    if (!deploymentStatus?.deployed) {
+      onAllowanceStatusChange?.(false);
+    }
+  }, [deploymentStatus?.deployed, onAllowanceStatusChange]);
 
   const checkVaultAddress = async () => {
     setIsChecking(true);
@@ -113,6 +121,7 @@ export default function VaultManager({
         aaWalletAddress={aaWalletAddress}
         privateKey={privateKey}
         onExecutorStatusChange={(authorized) => setExecutorAuthorized(authorized)}
+        onAllowanceStatusChange={onAllowanceStatusChange}
         refreshTrigger={refreshTrigger}
       />
       <div className="card-soft p-4">

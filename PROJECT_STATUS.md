@@ -61,6 +61,13 @@
 - ✅ 同步 txlist + tokentx，默认 5 分钟刷新间隔（支持手动刷新）
 - ✅ 同步超时与错误提示优化
 
+### 7) UI/UX 细节优化
+- ✅ Setup Steps 逻辑修正（增加 Fund / Approve Allowance 步骤）
+- ✅ Wallet/Vault 刷新与设置图标放大
+- ✅ Vault Debug 信息折叠隐藏
+- ✅ Fund 支持弹窗输入金额（KITE/USDT）
+- ✅ Hackathon 致谢区块与 Logo（SPARK AI Hackathon / Kite AI / ETH Panda / LX Dao）
+
 ---
 
 ## 🔁 当前产品流程（已确认）
@@ -142,6 +149,9 @@
 - `src/components/ai/AICommand.tsx`
 - `src/components/vault/RecentActivity.tsx`
 - `src/components/wallet/WalletInfo.tsx`
+- `src/components/vault/VaultApproval.tsx`
+- `src/components/vault/VaultInfo.tsx`
+- `src/app/page.tsx`
 
 ---
 
@@ -181,6 +191,7 @@ QWEN_API_KEY=<YOUR_QWEN_KEY>
 - ✅ Vault UI 能展示 allowance / AA 余额 / 规则
 - ✅ AI 交互已区分聊天/交易意图（非交易问题不会触发确认）
 - ✅ 交易历史缓存 + Recent Activity 展示
+- ✅ Setup Steps 与 Approve Allowance 状态正确
 - ❌ Paymaster 模式仍无法通过 AA33 校验
 
 **最后更新：2026-01-31**

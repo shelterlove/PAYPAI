@@ -13,6 +13,7 @@ interface VaultInfoProps {
   aaWalletAddress?: string;
   privateKey?: string;
   onExecutorStatusChange?: (authorized: boolean) => void;
+  onAllowanceStatusChange?: (approved: boolean) => void;
   refreshTrigger?: number;
 }
 
@@ -43,6 +44,7 @@ export default function VaultInfo({
   aaWalletAddress = '',
   privateKey = '',
   onExecutorStatusChange,
+  onAllowanceStatusChange,
   refreshTrigger
 }: VaultInfoProps) {
   const [vaultData, setVaultData] = useState<VaultData | null>(null);
@@ -139,6 +141,13 @@ export default function VaultInfo({
     }
   }, [vaultData?.executor?.authorized, onExecutorStatusChange]);
 
+  useEffect(() => {
+    if (!vaultData) return;
+    const allowanceValue = Number(vaultData.allowance || 0);
+    const isMaxAllowance = vaultData.allowanceRaw === ethers.MaxUint256.toString();
+    onAllowanceStatusChange?.(isMaxAllowance || allowanceValue > 0);
+  }, [vaultData?.allowance, vaultData?.allowanceRaw, onAllowanceStatusChange, vaultData]);
+
   const formatTimeWindow = (seconds: BigNumberish) => {
     const hours = Number(seconds) / 3600;
     return `${hours} hours`;
@@ -217,18 +226,18 @@ export default function VaultInfo({
           <button
             onClick={() => fetchVaultInfo(true)}
             disabled={refreshing}
-            className="btn-tertiary text-xs px-2.5 py-1"
+            className="btn-tertiary text-base px-3.5 py-1.5"
             title="Refresh"
           >
-            {refreshing ? '↻' : '⟳'}
+            <span className="text-lg leading-none">{refreshing ? '↻' : '⟳'}</span>
           </button>
           <button
             type="button"
             onClick={() => setShowDetails((prev) => !prev)}
-            className="btn-tertiary text-xs px-2.5 py-1"
+            className="btn-tertiary text-base px-3.5 py-1.5"
             title="Vault settings"
           >
-            <span aria-hidden>⚙</span>
+            <span className="text-lg leading-none" aria-hidden>⚙</span>
           </button>
         </div>
       </div>
@@ -322,7 +331,7 @@ export default function VaultInfo({
                         <button
                           type="button"
                           onClick={() => setShowRuleEditor(true)}
-                          className="btn-secondary text-xs px-3 py-1"
+                          className="btn-secondary text-sm px-3.5 py-1.5 mt-1"
                         >
                           Change Rules
                         </button>
