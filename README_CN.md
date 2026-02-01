@@ -13,7 +13,7 @@
 
 [English](README.md) | [中文](README_CN.md)
 
-[🎥 演示视频](https://youtu.be/bNBuSJotYtc) • [🎯 在线演示](#-演示展示) • [📖 项目文档](#-项目结构) • [🚀 快速开始](#-快速开始) • [💡 核心功能](#-核心功能)
+[🎥 演示视频](https://youtu.be/bNBuSJotYtc) • [🎯 在线演示](https://paypaisparkaihackthon.vercel.app/) • [📖 项目文档](#-项目结构) • [🚀 快速开始](#-快速开始) • [💡 核心功能](#-核心功能)
 
 </div>
 
@@ -93,7 +93,7 @@ https://youtu.be/bNBuSJotYtc
 ### 🔗 在线演示
 
 <!-- 如有可用，在此添加在线演示链接 -->
-*即将推出：已部署的应用程序链接*
+https://paypaisparkaihackthon.vercel.app/
 
 ### 🧪 测试网辅助
 

@@ -13,7 +13,7 @@
 
 [English](README.md) | [中文](README_CN.md)
 
-[🎥 Demo Video](https://youtu.be/bNBuSJotYtc) • [🎯 Live Demo](#-demo) • [📖 Documentation](#-project-structure) • [🚀 Quick Start](#-quick-start) • [💡 Features](#-core-features)
+[🎥 Demo Video](https://youtu.be/bNBuSJotYtc) • [🎯 Live Demo](https://paypaisparkaihackthon.vercel.app/) • [📖 Documentation](#-project-structure) • [🚀 Quick Start](#-quick-start) • [💡 Features](#-core-features)
 
 </div>
 
@@ -91,7 +91,7 @@ https://youtu.be/bNBuSJotYtc
 
 ### 🔗 Live Demo
 
-*Coming soon: Deployed application link*
+https://paypaisparkaihackthon.vercel.app/
 
 ### 🧪 Testnet Helpers
 

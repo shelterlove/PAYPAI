@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
-import { config, chains } from '@/lib/wagmi';
+import { config } from '@/lib/wagmi';
 
 const queryClient = new QueryClient();
 
@@ -43,7 +43,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider chains={chains} theme={rainbowTheme}>
+        <RainbowKitProvider theme={rainbowTheme}>
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>
