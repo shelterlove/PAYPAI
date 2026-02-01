@@ -13,7 +13,7 @@
 
 [English](README.md) | [中文](README_CN.md)
 
-[🎯 在线演示](#-演示展示) • [📖 项目文档](#-项目结构) • [🚀 快速开始](#-快速开始) • [💡 核心功能](#-核心功能)
+[🎥 演示视频](https://youtu.be/fRFlmEN_wS0) • [🎯 在线演示](#-演示展示) • [📖 项目文档](#-项目结构) • [🚀 快速开始](#-快速开始) • [💡 核心功能](#-核心功能)
 
 </div>
 
@@ -21,28 +21,27 @@
 
 ## 🌟 项目概述
 
-**PayPai** 是一个创新的 AI 驱动账户抽象钱包，在自然语言和区块链交易之间架起桥梁。只需用简单的中文告诉 PayPai 你想做什么，它就会为你处理复杂的区块链操作！
+**PayPai** 是面向下一代链上支付的 AI 原生智能钱包，将自然语言转化为安全、可编程的交易指令，并结合账户抽象与策略化预算控制，为个人与团队提供更可控的链上支付体验。
 
-### 💡 问题背景
-
-传统 Web3 钱包对普通用户来说过于复杂和难以理解：
-- ❌ 令人困惑的交易参数（Gas、Nonce、十六进制数据）
-- ❌ 复杂的地址管理
-- ❌ 缺乏智能支出控制
-- ❌ 对新手用户不友好
-
-### ✨ 我们的解决方案
-
-PayPai 通过以下方式改变区块链交互：
-- ✅ **自然语言界面**："给 Alice 转 10 个 USDT" → 完成！
-- ✅ **AI 驱动的交易解析**：千问 API 理解你的意图
-- ✅ **智能预算管理**：自动化的支出规则和限额
-- ✅ **无 Gas 体验**：账户抽象简化交易流程
-- ✅ **用户友好**：无需区块链专业知识
+**愿景：** 让链上支出像聊天一样简单，同时具备可控、可审计、可自动化的安全保障。
 
 ### 🎯 核心价值
 
-**降低 Web3 采用门槛，让区块链交易像和朋友聊天一样简单。**
+- **自然语言支付**：AI 解析意图，自动生成交易方案
+- **账户抽象执行**：更安全、可扩展的交易路径
+- **策略化预算控制**：时间窗口、额度、白/黑名单
+- **代理自动化**：支持重复、批量与规则化支付
+
+### ⚡ 1 分钟快速体验
+
+1. 连接钱包（MetaMask / RainbowKit）
+2. 部署 AA 钱包
+3. 给 AA 钱包充值 KITE 或 USDT
+4. 创建并授权 Vault
+5. Approve Vault allowance
+6. 让 AI 代理执行转账
+
+> 提示：可先使用 KITE 水龙头领取测试币。
 
 ---
 
@@ -74,7 +73,7 @@ PayPai 通过以下方式改变区块链交互：
 
 ```
 用户："给 0x1234...5678 转 5 个代币"
-PayPai："我将向 0x1234...5678 发送 5 ETH。确认吗？"
+PayPai："我将向 0x1234...5678 发送 5 USDT。确认吗？"
 用户："确认"
 PayPai：✅ "交易已发送！哈希：0xabcd..."
 ```
@@ -83,22 +82,23 @@ PayPai：✅ "交易已发送！哈希：0xabcd..."
 
 ## 🎯 演示展示
 
-> **注意**：这是一个黑客松项目，以下演示材料正在准备中。
 
-### 📸 界面截图
-
-<!-- 在此添加截图 -->
-*即将推出：展示自然语言界面的 UI 截图*
 
 ### 🎥 演示视频
 
-<!-- 在此添加演示视频链接 -->
-*即将推出：完整功能演示视频*
+```text
+https://youtu.be/fRFlmEN_wS0
+```
 
 ### 🔗 在线演示
 
 <!-- 如有可用，在此添加在线演示链接 -->
 *即将推出：已部署的应用程序链接*
+
+### 🧪 测试网辅助
+
+- KITE 水龙头: https://faucet.gokite.ai/
+- KiteScan 浏览器（测试网）: https://testnet.kitescan.ai/
 
 ---
 
@@ -250,7 +250,7 @@ cp .env.example .env.local
 # 必需：您的千问 API 密钥
 QWEN_API_KEY=your_qwen_api_key_here
 
-# 必需：已部署的合约地址（参见部署指南）
+# 必需：已部署的合约地址（参见部署指南 / deployments.json）
 NEXT_PUBLIC_VAULT_FACTORY=0x...
 NEXT_PUBLIC_VAULT_IMPLEMENTATION_ADDRESS=0x...
 
@@ -259,6 +259,13 @@ PRIVATE_KEY=your_development_private_key
 EXECUTOR_PRIVATE_KEY=your_executor_private_key
 NEXT_PUBLIC_EXECUTOR_ADDRESS=0x...
 ```
+
+**必需 vs 可选**
+
+- **必需**：`QWEN_API_KEY`、`NEXT_PUBLIC_VAULT_FACTORY`、`NEXT_PUBLIC_VAULT_IMPLEMENTATION_ADDRESS`
+- **可选（仅开发测试）**：`PRIVATE_KEY`、`EXECUTOR_PRIVATE_KEY`、`NEXT_PUBLIC_EXECUTOR_ADDRESS`
+
+> 安全提示：仅使用测试私钥与测试资产，请勿导入真实资产私钥。
 
 ### 4. 运行开发服务器
 
@@ -277,6 +284,14 @@ cd contracts
 npm install
 npx hardhat run scripts/deploy-factory.js --network kite_testnet
 ```
+
+---
+
+## 📄 智能合约
+
+- 核心合约：`ClientAgentVault.sol`（UUPS 可升级）
+- 部署地址：见 `contracts/deployments.json` 与 `.env.local`
+- 合约验证：使用 `contracts/scripts/verify.js` 进行 KiteScan 验证
 
 ---
 
@@ -439,25 +454,22 @@ PayPai/
 
 ---
 
-## 🛣️ 发展路线图
+## 🛣️ 未来应用与路线
 
-### 阶段 1：MVP ✅（当前）
-- 基础自然语言界面
-- AA 钱包创建和管理
-- 简单支出规则
-- Kite 测试网部署
+### 近期
+- 多资产支付与更丰富的代币路由
+- 更强的意图理解（批量 / 拆分 / 定时）
+- 团队协作与审批流程
 
-### 阶段 2：增强 🚧
-- ERC-20 代币支持
-- 改进的 AI 对话
-- 高级支出规则
-- 用户仪表板
+### 中期
+- 商户收款与发票自动化
+- DAO / 初创企业金库自动化
+- 风控能力：异常检测、分类限额
 
-### 阶段 3：扩展 📋
-- 多链支持
-- 移动应用
-- DeFi 协议集成
-- 社交恢复
+### 长期
+- 多链支付与资产抽象
+- 面向消费者的订阅 / 自动扣费
+- SDK 嵌入式钱包与应用内支付
 
 ---
 

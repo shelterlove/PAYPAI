@@ -25,6 +25,21 @@
   --pp-pill-accent-border: rgba(106, 75, 255, 0.2);
   --pp-accent-text: #6A4BFF;
   --pp-info-text: #2AA6FF;
+  --pp-address-text: #334155;
+  --pp-user-bg: rgba(90, 57, 186, 0.08);
+  --pp-user-border: rgba(90, 57, 186, 0.22);
+  --pp-user-text: #1F2937;
+  --pp-confirm-bg: #F5F2FF;
+  --pp-confirm-border: rgba(90, 57, 186, 0.28);
+  --pp-confirm-text: #27308A;
+  --pp-success-bg: #ECFDF3;
+  --pp-success-border: #A7F3D0;
+  --pp-success-text: #0F766E;
+  --pp-error-bg: #FFF1F2;
+  --pp-error-border: #FECACA;
+  --pp-error-text: #E11D48;
+  --pp-chat-card-bg: rgba(255, 255, 255, 0.78);
+  --pp-chat-card-border: rgba(255, 255, 255, 0.6);
 }
 
 .theme-dark {
@@ -50,12 +65,27 @@
   --pp-pill-accent-border: rgba(124, 101, 255, 0.32);
   --pp-accent-text: #C7BFFF;
   --pp-info-text: #76C8FF;
+  --pp-address-text: #C2CBD9;
+  --pp-user-bg: rgba(155, 136, 255, 0.16);
+  --pp-user-border: rgba(155, 136, 255, 0.35);
+  --pp-user-text: #E6E3FF;
+  --pp-confirm-bg: rgba(58, 36, 92, 0.6);
+  --pp-confirm-border: rgba(167, 139, 250, 0.35);
+  --pp-confirm-text: #E6E3FF;
+  --pp-success-bg: rgba(6, 78, 59, 0.45);
+  --pp-success-border: rgba(52, 211, 153, 0.35);
+  --pp-success-text: #A7F3D0;
+  --pp-error-bg: rgba(136, 19, 55, 0.45);
+  --pp-error-border: rgba(244, 63, 94, 0.35);
+  --pp-error-text: #FDA4AF;
+  --pp-chat-card-bg: rgba(17, 24, 39, 0.65);
+  --pp-chat-card-border: rgba(148, 163, 184, 0.18);
 }
 
 body {
   color: var(--pp-text);
   background: linear-gradient(180deg, var(--pp-bg-top) 0%, var(--pp-bg-bottom) 100%);
-  font-family: var(--font-manrope), "Manrope", "SF Pro Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-manrope), "Manrope", "Inter", "Roboto", "SF Pro Text", system-ui, -apple-system, "Segoe UI", sans-serif;
   font-variant-numeric: tabular-nums;
   font-size: 16px;
   font-weight: 500;
@@ -89,7 +119,7 @@ body::before {
     background: linear-gradient(180deg, var(--pp-bg-top) 0%, var(--pp-bg-bottom) 100%);
   }
   .paypai-logo {
-    font-family: var(--font-poppins), "Poppins", "Montserrat", sans-serif;
+    font-family: var(--font-poppins), "Poppins", "Avenir Next", "Circular", sans-serif;
     font-weight: 700;
     font-size: 48px;
     background: linear-gradient(to right, #2F5BD6, #5B2B8A);
@@ -107,6 +137,10 @@ body::before {
     color: var(--pp-text);
   }
 
+  .font-mono {
+    font-family: "Courier New", "Consolas", "Menlo", monospace;
+  }
+
   .theme-dark .text-slate-900,
   .theme-dark .text-slate-800,
   .theme-dark .text-slate-700,
@@ -116,11 +150,11 @@ body::before {
 
   .theme-dark .text-slate-500,
   .theme-dark .text-slate-400 {
-    color: rgba(148, 163, 184, 0.9) !important;
+    color: rgba(203, 213, 225, 0.95) !important;
   }
 
   .theme-dark .text-slate-300 {
-    color: rgba(148, 163, 184, 0.75) !important;
+    color: rgba(203, 213, 225, 0.9) !important;
   }
 
   .theme-dark .border-slate-200,
@@ -232,6 +266,10 @@ body::before {
     color: var(--pp-info-text);
   }
 
+  .text-address {
+    color: var(--pp-address-text);
+  }
+
   .badge {
     @apply rounded-full px-2.5 py-1 text-xs font-semibold tracking-tight;
   }
@@ -282,6 +320,38 @@ body::before {
     color: rgba(226, 232, 240, 0.95);
     background: rgba(15, 23, 42, 0.7);
     border-color: rgba(148, 163, 184, 0.22);
+  }
+
+  .theme-dark .rk-connect-button,
+  .theme-dark [data-rk] button,
+  .theme-dark [data-rk] .rk-button {
+    background: rgba(15, 23, 42, 0.7) !important;
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    color: rgba(226, 232, 240, 0.95) !important;
+    box-shadow: 0 6px 18px rgba(8, 10, 24, 0.45) !important;
+  }
+
+  .theme-dark [data-rk] button svg,
+  .theme-dark [data-rk] .rk-button svg {
+    filter: brightness(1.1);
+  }
+
+  .theme-dark .theme-alert {
+    background: rgba(180, 120, 200, 0.14);
+    border-color: rgba(180, 120, 200, 0.28);
+    color: rgba(236, 208, 255, 0.92);
+  }
+
+  .theme-dark .theme-alert .text-blue-700 {
+    color: rgba(236, 208, 255, 0.92) !important;
+  }
+
+  .theme-dark .theme-alert .text-amber-700 {
+    color: rgba(236, 208, 255, 0.92) !important;
+  }
+
+  .theme-dark .theme-alert .text-slate-700 {
+    color: rgba(236, 208, 255, 0.92) !important;
   }
 
   .btn-danger {

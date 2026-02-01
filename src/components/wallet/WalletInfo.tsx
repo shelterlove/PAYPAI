@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from 'react';
 import { ethers } from 'ethers';
 import { useWalletClient, useAccount } from 'wagmi';
 import { formatAddress } from '@/lib/wallet';
@@ -24,7 +24,7 @@ interface WalletData {
   signerBalance: string;
 }
 
-export default function WalletInfo({
+function WalletInfo({
   signerAddress,
   privateKey,
   onDeploymentStatusChange,
@@ -52,17 +52,22 @@ export default function WalletInfo({
     address: string;
     name: string;
     balance: string;
+    decimals?: number;
   }>>([
     {
       address: '0x0fF5393387ad2f9f691FD6Fd28e07E3969e27e63',
       name: 'USDT',
-      balance: '0'
+      balance: '0',
+      decimals: 18
     }
   ]);
   const [showAddToken, setShowAddToken] = useState(true);
   const [showRecentActivity, setShowRecentActivity] = useState(false);
-  const [tokenRefreshTick, setTokenRefreshTick] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const fetchAbortRef = useRef<AbortController | null>(null);
+  const lastWalletKeyRef = useRef('');
+  const lastTokenRefreshRef = useRef(0);
+  const tokensRef = useRef(importedTokens);
 
   // Get wagmi connection status
   const { isConnected } = useAccount();
@@ -79,13 +84,18 @@ export default function WalletInfo({
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
-  const fetchWalletInfo = async (showRefreshing = false) => {
+  const fetchWalletInfo = useCallback(async (showRefreshing = false) => {
     try {
       if (showRefreshing) setRefreshing(true);
       else setLoading(true);
 
+      fetchAbortRef.current?.abort();
+      const controller = new AbortController();
+      fetchAbortRef.current = controller;
+
       const response = await fetch(
-        `/api/wallet/info?address=${signerAddress}`
+        `/api/wallet/info?address=${signerAddress}`,
+        { signal: controller.signal }
       );
 
       if (!response.ok) {
@@ -93,31 +103,47 @@ export default function WalletInfo({
       }
 
       const data = await response.json();
-      setWalletData(data);
-      setTokenRefreshTick((prev) => prev + 1);
+      const payloadKey = JSON.stringify({
+        address: data?.wallet?.address,
+        deployed: data?.wallet?.isDeployed,
+        balance: data?.balance,
+        signerBalance: data?.signerBalance
+      });
+      if (payloadKey !== lastWalletKeyRef.current) {
+        lastWalletKeyRef.current = payloadKey;
+        setWalletData(data);
+      }
 
       // Notify parent component about deployment status
       if (onDeploymentStatusChange) {
         onDeploymentStatusChange(data.wallet.isDeployed);
       }
     } catch (error) {
+      if ((error as Error)?.name === 'AbortError') return;
       console.error('Error fetching wallet info:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [signerAddress, onDeploymentStatusChange]);
 
   useEffect(() => {
     fetchWalletInfo();
+  }, [fetchWalletInfo]);
 
-    // Refresh every 20 seconds when tab is visible
-    const interval = setInterval(() => {
-      if (!isVisible) return;
+  useEffect(() => {
+    if (typeof refreshTrigger === 'number') {
       fetchWalletInfo(true);
-    }, 20000);
+    }
+  }, [refreshTrigger, fetchWalletInfo]);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    const interval = setInterval(() => {
+      fetchWalletInfo(true);
+    }, 25000);
     return () => clearInterval(interval);
-  }, [signerAddress, refreshTrigger, isVisible]);
+  }, [fetchWalletInfo, isVisible]);
 
   const handleDeploy = async () => {
     try {
@@ -348,7 +374,13 @@ export default function WalletInfo({
     setShowFundModal(false);
   };
 
-  const tokenKey = importedTokens.map((token) => token.address.toLowerCase()).join('|');
+  const tokenKey = useMemo(() => importedTokens.map((token) => token.address.toLowerCase()).join('|'), [importedTokens]);
+  const rpcUrl = process.env.NEXT_PUBLIC_KITE_RPC_URL;
+  const provider = useMemo(() => (rpcUrl ? new ethers.JsonRpcProvider(rpcUrl) : null), [rpcUrl]);
+
+  useEffect(() => {
+    tokensRef.current = importedTokens;
+  }, [importedTokens]);
 
   const handleAddToken = async () => {
     setTokenImportError('');
@@ -401,7 +433,7 @@ export default function WalletInfo({
 
       setImportedTokens((prev) => [
         ...prev,
-        { address, name, balance: formatted }
+        { address, name, balance: formatted, decimals }
       ]);
       setTokenAddressInput('');
       setTokenNameInput('');
@@ -412,16 +444,19 @@ export default function WalletInfo({
     }
   };
 
-  useEffect(() => {
-    if (!walletData?.wallet?.address || importedTokens.length === 0) return;
-    let cancelled = false;
+  const refreshTokenBalances = useCallback(
+    async (force = false) => {
+      if (!provider || !walletData?.wallet?.address) return;
+      if (!isVisible) return;
+      if (!tokensRef.current.length) return;
+      const now = Date.now();
+      if (!force && now - lastTokenRefreshRef.current < 45000) return;
+      lastTokenRefreshRef.current = now;
 
-    const refreshTokenBalances = async () => {
       try {
-        if (!isVisible) return;
-        const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_KITE_RPC_URL);
+        const tokens = tokensRef.current;
         const updated = await Promise.all(
-          importedTokens.map(async (token) => {
+          tokens.map(async (token) => {
             const erc20 = new ethers.Contract(
               token.address,
               [
@@ -432,11 +467,13 @@ export default function WalletInfo({
               provider
             );
 
-            let decimals = 18;
-            try {
-              decimals = Number(await erc20.decimals());
-            } catch {
-              decimals = 18;
+            let decimals = token.decimals ?? 18;
+            if (token.decimals == null) {
+              try {
+                decimals = Number(await erc20.decimals());
+              } catch {
+                decimals = 18;
+              }
             }
 
             let name = token.name;
@@ -452,28 +489,42 @@ export default function WalletInfo({
             return {
               ...token,
               name,
+              decimals,
               balance: ethers.formatUnits(balance, decimals)
             };
           })
         );
 
-        if (!cancelled) {
-          const hasChange = updated.some((token, index) => token.balance !== importedTokens[index]?.balance || token.name !== importedTokens[index]?.name);
-          if (hasChange) {
-            setImportedTokens(updated);
-          }
+        const hasChange = updated.some(
+          (token, index) =>
+            token.balance !== tokens[index]?.balance ||
+            token.name !== tokens[index]?.name ||
+            token.decimals !== tokens[index]?.decimals
+        );
+        if (hasChange) {
+          setImportedTokens(updated);
         }
       } catch {
         // ignore balance refresh errors
       }
-    };
+    },
+    [provider, walletData?.wallet?.address, isVisible]
+  );
 
-    refreshTokenBalances();
+  useEffect(() => {
+    if (!walletData?.wallet?.address || !tokenKey) return;
+    refreshTokenBalances(true);
+    const interval = setInterval(() => {
+      refreshTokenBalances(false);
+    }, 45000);
+    return () => clearInterval(interval);
+  }, [walletData?.wallet?.address, tokenKey, refreshTokenBalances]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [walletData?.wallet?.address, refreshTrigger, tokenKey, tokenRefreshTick, isVisible]);
+  useEffect(() => {
+    if (typeof refreshTrigger === 'number') {
+      refreshTokenBalances(true);
+    }
+  }, [refreshTrigger, refreshTokenBalances]);
 
   const aaBalance = Number(walletData?.balance ?? 0);
   const deploymentLabel = walletData?.wallet?.isDeployed ? 'Deployed' : 'Not Deployed';
@@ -590,6 +641,53 @@ export default function WalletInfo({
       </div>
 
       <div className="space-y-3">
+        {walletData.wallet.isDeployed && isLowBalance && (
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl theme-alert">
+            <p className="text-sm text-blue-700">
+              Your AA wallet balance is low. Fund it to start transactions.
+            </p>
+          </div>
+        )}
+
+        {!walletData.wallet.isDeployed && (
+          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+            <p className="text-sm text-amber-700 mb-3">
+              Your AA wallet needs to be deployed before you can use it.
+            </p>
+            {!privateKey && (isWalletClientLoading || !isConnected) && (
+              <p className="text-xs text-slate-500 mb-2">
+                {isWalletClientLoading ? '⏳ Loading wallet connection...' : !isConnected ? '⚠️ Wallet not connected' : ''}
+              </p>
+            )}
+            <button
+              onClick={handleDeploy}
+              disabled={deploying || (!privateKey && (isWalletClientLoading || !isConnected))}
+              className="w-full btn-secondary text-amber-700 border-amber-200 hover:bg-amber-50"
+            >
+              {deploying ? 'Deploying...' : (!privateKey && isWalletClientLoading) ? 'Loading...' : (!privateKey && !isConnected) ? 'Wallet Not Connected' : 'Deploy Wallet'}
+            </button>
+          </div>
+        )}
+
+        <div className="mt-4 rounded-xl border border-[color:var(--pp-border)] bg-white/90 p-4 shadow-[var(--pp-shadow)]">
+          <button
+            type="button"
+            onClick={() => setShowRecentActivity((prev) => !prev)}
+            className="flex w-full items-center justify-between text-left"
+            aria-expanded={showRecentActivity}
+          >
+            <span className="text-sm font-semibold text-slate-700">Recent Activities</span>
+            <span className="text-slate-400 text-sm">{showRecentActivity ? '▾' : '▸'}</span>
+          </button>
+          {showRecentActivity && (
+            <RecentActivity
+              signerAddress={signerAddress}
+              aaWalletAddress={aaWalletAddress}
+              refreshTrigger={refreshTrigger}
+              compact
+            />
+          )}
+        </div>
         {showDetails && (
           <div className="mt-2 rounded-xl border border-[color:var(--pp-border)] bg-white/90 p-4 shadow-[var(--pp-shadow)]">
             <div className="flex items-center justify-between">
@@ -670,54 +768,6 @@ export default function WalletInfo({
             </div>
           </div>
         )}
-
-        {walletData.wallet.isDeployed && isLowBalance && (
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-            <p className="text-sm text-blue-700">
-              Your AA wallet balance is low. Fund it to start transactions.
-            </p>
-          </div>
-        )}
-
-        {!walletData.wallet.isDeployed && (
-          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-            <p className="text-sm text-amber-700 mb-3">
-              Your AA wallet needs to be deployed before you can use it.
-            </p>
-            {!privateKey && (isWalletClientLoading || !isConnected) && (
-              <p className="text-xs text-slate-500 mb-2">
-                {isWalletClientLoading ? '⏳ Loading wallet connection...' : !isConnected ? '⚠️ Wallet not connected' : ''}
-              </p>
-            )}
-            <button
-              onClick={handleDeploy}
-              disabled={deploying || (!privateKey && (isWalletClientLoading || !isConnected))}
-              className="w-full btn-secondary text-amber-700 border-amber-200 hover:bg-amber-50"
-            >
-              {deploying ? 'Deploying...' : (!privateKey && isWalletClientLoading) ? 'Loading...' : (!privateKey && !isConnected) ? 'Wallet Not Connected' : 'Deploy Wallet'}
-            </button>
-          </div>
-        )}
-
-        <div className="mt-4 rounded-xl border border-[color:var(--pp-border)] bg-white/90 p-4 shadow-[var(--pp-shadow)]">
-          <button
-            type="button"
-            onClick={() => setShowRecentActivity((prev) => !prev)}
-            className="flex w-full items-center justify-between text-left"
-            aria-expanded={showRecentActivity}
-          >
-            <span className="text-sm font-semibold text-slate-700">Recent Activities</span>
-            <span className="text-slate-400 text-sm">{showRecentActivity ? '▾' : '▸'}</span>
-          </button>
-          {showRecentActivity && (
-            <RecentActivity
-              signerAddress={signerAddress}
-              aaWalletAddress={aaWalletAddress}
-              refreshTrigger={refreshTrigger}
-              compact
-            />
-          )}
-        </div>
         {showFundModal && fundToken && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-sm px-4">
             <div className="w-full max-w-md card-soft p-6">
@@ -768,6 +818,8 @@ export default function WalletInfo({
   );
 }
 
+export default memo(WalletInfo);
+
 function InfoRow({
   label,
   value,
@@ -792,7 +844,7 @@ function InfoRow({
     <div className="flex justify-between items-start py-2 border-b border-slate-200 last:border-0">
       <span className="text-slate-500 text-sm">{label}</span>
       <span className="flex items-center gap-2">
-        <span className="text-right font-mono text-sm text-slate-700">{value}</span>
+        <span className="text-right font-mono text-sm text-address">{value}</span>
         {copyValue && (
           <button
             type="button"

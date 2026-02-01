@@ -21,28 +21,28 @@
 
 ## 🌟 Overview
 
-**PayPai** is an innovative AI-powered Account Abstraction wallet that bridges the gap between natural language and blockchain transactions. Simply tell PayPai what you want to do in plain English, and watch as it handles the complex blockchain operations for you!
+**PayPai** is an AI‑native smart wallet built for the next generation of on‑chain payments. It turns natural language into safe, programmable transactions, combining Account Abstraction with policy‑based spending control and a conversational agent.
 
-### 💡 The Problem
+**Vision:** make on‑chain spending as intuitive as chat, while giving users and teams granular control over budgets, rules, and automation.
 
-Traditional Web3 wallets are complex and intimidating for everyday users:
-- ❌ Confusing transaction parameters (gas, nonce, hex data)
-- ❌ Complex address management
-- ❌ No intelligent spending controls
-- ❌ Steep learning curve for newcomers
+### ⚡ 1‑Minute Quick Experience
 
-### ✨ Our Solution
+1. Connect your wallet (MetaMask/RainbowKit)
+2. Deploy AA wallet
+3. Fund AA wallet with KITE or USDT
+4. Create & authorize Vault
+5. Approve Vault allowance
+6. Ask the AI agent to send a payment
 
-PayPai transforms blockchain interaction through:
-- ✅ **Natural Language Interface**: "Send 10 USDT to Alice" → Done!
-- ✅ **AI-Powered Transaction Parsing**: Qwen API understands your intent
-- ✅ **Smart Budget Management**: Automated spending rules and limits
-- ✅ **Gasless Experience**: Account Abstraction simplifies transactions
-- ✅ **User-Friendly**: No blockchain expertise required
+> Tip: You can use the KITE faucet to get test tokens before funding the AA wallet.
 
 ### 🎯 Core Value
 
-**Lower the barrier to Web3 adoption by making blockchain transactions as easy as chatting with a friend.**
+PayPai lowers the friction of Web3 adoption by combining:
+- **Natural Language Payments** with AI intent parsing
+- **Account Abstraction** for safer, flexible execution
+- **Policy‑Based Spending** (budgets, time windows, allow/deny lists)
+- **Agent‑Assisted Automation** for recurring and high‑volume workflows
 
 ---
 
@@ -60,10 +60,10 @@ PayPai transforms blockchain interaction through:
    - Configurable budget limits and time windows
    - Whitelist/blacklist management for recipients
 
-3. **True Account Abstraction**
-   - Gasless transactions powered by Kite AI
-   - No seed phrase management required
-   - Multi-wallet connection support
+3. **Programmable Spending Control**
+   - Time‑boxed budgets and policy checks
+   - Clear auditability for agent‑initiated actions
+   - Extensible for team approvals and limits
 
 4. **Intelligent AI Agent**
    - Multi-turn conversation support
@@ -73,8 +73,8 @@ PayPai transforms blockchain interaction through:
 ### 🎨 User Experience
 
 ```
-User: "Send 5 tokens to 0x1234...5678"
-PayPai: "I'll send 5 ETH to 0x1234...5678. Confirm?"
+User: "Send 5 USDT to 0x1234...5678"
+PayPai: "I'll send 5 USDT to 0x1234...5678. Confirm?"
 User: "Yes"
 PayPai: ✅ "Transaction sent! Hash: 0xabcd..."
 ```
@@ -82,13 +82,6 @@ PayPai: ✅ "Transaction sent! Hash: 0xabcd..."
 ---
 
 ## 🎯 Demo
-
-> **Note**: This is a hackathon project. Below are planned demo materials.
-
-### 📸 Screenshots
-
-<!-- Add screenshots here -->
-*Coming soon: UI screenshots showcasing the natural language interface*
 
 ### 🎥 Demo Video
 
@@ -98,8 +91,12 @@ https://youtu.be/fRFlmEN_wS0
 
 ### 🔗 Live Demo
 
-<!-- Add live demo link if available -->
 *Coming soon: Deployed application link*
+
+### 🧪 Testnet Helpers
+
+- KITE Faucet: https://faucet.gokite.ai/
+- KiteScan Explorer (Testnet): https://testnet.kitescan.ai/
 
 ---
 
@@ -251,7 +248,7 @@ Update the following values in `.env.local`:
 # Required: Your Qwen API key for AI agent
 QWEN_API_KEY=your_qwen_api_key_here
 
-# Required: Deployed contract addresses (see deployment guide)
+# Required: Deployed contract addresses (see deployment guide / deployments.json)
 NEXT_PUBLIC_VAULT_FACTORY=0x...
 NEXT_PUBLIC_VAULT_IMPLEMENTATION_ADDRESS=0x...
 
@@ -260,6 +257,13 @@ PRIVATE_KEY=your_development_private_key
 EXECUTOR_PRIVATE_KEY=your_executor_private_key
 NEXT_PUBLIC_EXECUTOR_ADDRESS=0x...
 ```
+
+**Required vs Optional**
+
+- **Required**: `QWEN_API_KEY`, `NEXT_PUBLIC_VAULT_FACTORY`, `NEXT_PUBLIC_VAULT_IMPLEMENTATION_ADDRESS`
+- **Optional** (dev only): `PRIVATE_KEY`, `EXECUTOR_PRIVATE_KEY`, `NEXT_PUBLIC_EXECUTOR_ADDRESS`
+
+> Security note: Only use test keys and test assets. Do **not** import real private keys or mainnet funds.
 
 ### 4. Run Development Server
 
@@ -278,6 +282,14 @@ cd contracts
 npm install
 npx hardhat run scripts/deploy-factory.js --network kite_testnet
 ```
+
+---
+
+## 📄 Smart Contracts
+
+- Core contract: `ClientAgentVault.sol` (UUPS upgradeable)
+- Deployment addresses: see `contracts/deployments.json` and your `.env.local`
+- Verify on KiteScan: use Hardhat verify script in `contracts/scripts/verify.js`
 
 ---
 
@@ -440,25 +452,22 @@ PayPai/
 
 ---
 
-## 🛣️ Roadmap
+## 🛣️ Roadmap & Future Applications
 
-### Phase 1: MVP ✅ (Current)
-- Basic natural language interface
-- AA wallet creation and management
-- Simple spending rules
-- Kite testnet deployment
+### Near Term
+- Multi‑asset payments and richer token routing
+- More powerful intent understanding (batch, split, schedule)
+- Team workflows with approvals and roles
 
-### Phase 2: Enhancement 🚧
-- ERC-20 token support
-- Improved AI conversation
-- Advanced spending rules
-- User dashboard
+### Mid Term
+- Merchant checkout flows and invoice automation
+- Agent‑driven treasury operations for DAOs and startups
+- Risk controls: anomaly detection, limits by category
 
-### Phase 3: Expansion 📋
-- Multi-chain support
-- Mobile application
-- DeFi protocol integration
-- Social recovery
+### Long Term
+- Multi‑chain payments and asset abstraction
+- Consumer‑grade “autopay” for subscriptions
+- Embedded wallet SDK for apps and marketplaces
 
 ---
 

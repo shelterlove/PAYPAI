@@ -106,7 +106,7 @@ export default function WalletConnect({ onPrivateKeyConnect }: WalletConnectProp
             </div>
 
             <p className="text-xs text-slate-500">
-              ⚠️ Never share your private key. This is for development only.
+              ⚠️ 仅限测试使用，勿用于真实资产。请勿分享私钥。
             </p>
           </div>
         )}

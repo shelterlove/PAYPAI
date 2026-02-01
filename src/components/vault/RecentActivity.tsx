@@ -168,6 +168,9 @@ export default function RecentActivity({
           })}
         </div>
       )}
+      <p className="text-xs text-slate-400">
+        仅显示最近 100 条交易，数据同步可能有延迟。
+      </p>
       {canShowMore && (
         <button
           type="button"

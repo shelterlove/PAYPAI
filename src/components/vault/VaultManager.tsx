@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import VaultInfo from './VaultInfo';
 import VaultConfig from './VaultConfig';
 import VaultWithdraw from './VaultWithdraw';
@@ -19,7 +19,7 @@ interface VaultManagerProps {
   vaultExecutorReady?: boolean;
 }
 
-export default function VaultManager({
+function VaultManager({
   aaWalletAddress,
   privateKey,
   onVaultReady,
@@ -40,24 +40,7 @@ export default function VaultManager({
     hasBalance: boolean;
   } | null>(null);
 
-  useEffect(() => {
-    // Calculate and check vault address on mount
-    checkVaultAddress();
-  }, [aaWalletAddress]);
-
-  useEffect(() => {
-    if (deploymentStatus?.deployed && vaultAddress) {
-      onVaultReady?.(vaultAddress, executorAuthorized);
-    }
-  }, [deploymentStatus?.deployed, vaultAddress, executorAuthorized, onVaultReady]);
-
-  useEffect(() => {
-    if (!deploymentStatus?.deployed) {
-      onAllowanceStatusChange?.(false);
-    }
-  }, [deploymentStatus?.deployed, onAllowanceStatusChange]);
-
-  const checkVaultAddress = async () => {
+  const checkVaultAddress = useCallback(async () => {
     setIsChecking(true);
     try {
       // Call API to calculate vault address
@@ -81,11 +64,24 @@ export default function VaultManager({
     } finally {
       setIsChecking(false);
     }
-  };
+  }, [aaWalletAddress]);
 
-  const handleDeployNew = () => {
-    alert('Vault deployment feature coming soon!\n\nFor now, you can:\n1. Use Kite&apos;s deployment tools\n2. Enter an existing vault address manually');
-  };
+  useEffect(() => {
+    // Calculate and check vault address on mount
+    checkVaultAddress();
+  }, [aaWalletAddress, checkVaultAddress]);
+
+  useEffect(() => {
+    if (deploymentStatus?.deployed && vaultAddress) {
+      onVaultReady?.(vaultAddress, executorAuthorized);
+    }
+  }, [deploymentStatus?.deployed, vaultAddress, executorAuthorized, onVaultReady]);
+
+  useEffect(() => {
+    if (!deploymentStatus?.deployed) {
+      onAllowanceStatusChange?.(false);
+    }
+  }, [deploymentStatus?.deployed, onAllowanceStatusChange]);
 
   if (isChecking) {
     return (
@@ -146,19 +142,25 @@ export default function VaultManager({
             signerAddress={aaWalletAddress}
             privateKey={privateKey}
             vaultAddress={vaultAddress}
-            onApproved={() => window.location.reload()}
+            onApproved={() => {
+              onRefresh?.();
+            }}
           />
           <VaultConfig
             aaWalletAddress={aaWalletAddress}
             privateKey={privateKey}
             vaultAddress={vaultAddress}
-            onConfigured={() => window.location.reload()}
+            onConfigured={() => {
+              onRefresh?.();
+            }}
           />
           <VaultWithdraw
             vaultAddress={vaultAddress}
             aaWalletAddress={aaWalletAddress}
             privateKey={privateKey}
-            onWithdrawn={() => window.location.reload()}
+            onWithdrawn={() => {
+              onRefresh?.();
+            }}
           />
           <details className="card-soft p-4">
             <summary className="cursor-pointer text-sm font-semibold text-slate-700">
@@ -181,3 +183,5 @@ export default function VaultManager({
     </div>
   );
 }
+
+export default memo(VaultManager);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, type CSSProperties } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useAccount } from 'wagmi';
@@ -31,8 +31,9 @@ export default function Home() {
   const [showSetupSteps, setShowSetupSteps] = useState(true);
   const [stickyTop, setStickyTop] = useState(112);
   const headerRef = useRef<HTMLDivElement | null>(null);
-  const themeToggle = (
-    <ThemeToggle className="absolute top-6 right-6 z-20" />
+  const themeToggle = useMemo(
+    () => <ThemeToggle className="absolute top-6 right-6 z-20" />,
+    []
   );
 
   const { address, isConnected } = useAccount();
@@ -42,11 +43,34 @@ export default function Home() {
     setMounted(true);
   }, []);
 
-  const handlePrivateKeyConnect = (address: string, key: string) => {
+  const handlePrivateKeyConnect = useCallback((address: string, key: string) => {
     console.log('handlePrivateKeyConnect:', { address, key: key ? 'exists' : 'empty' });
     setManualAddress(address);
     setPrivateKey(key);
-  };
+  }, []);
+
+  const handleVaultReady = useCallback((address: string, executorReady: boolean) => {
+    setVaultAddress(address);
+    setVaultExecutorReady(executorReady);
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshTrigger((prev) => prev + 1);
+  }, []);
+
+  const handleTransactionExecuted = useCallback(() => {
+    setRefreshTrigger((prev) => prev + 1);
+  }, []);
+
+  const handleToggleVault = useCallback((value: boolean) => {
+    setUseVault(value);
+  }, []);
+
+  const handleDisconnectDevKey = useCallback(() => {
+    setManualAddress('');
+    setPrivateKey('');
+    setIsWalletDeployed(false);
+  }, []);
 
   const signerAddress = useMemo(() => {
     if (isConnected && address) return address;
@@ -164,6 +188,9 @@ export default function Home() {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-32 right-0 h-96 w-96 rounded-full bg-[radial-gradient(circle_at_top,_rgba(0,231,255,0.22),_transparent_70%)]"></div>
         <div className="absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-[radial-gradient(circle_at_top,_rgba(154,85,255,0.2),_transparent_70%)]"></div>
+        <div className="absolute top-24 -left-28 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_top,_rgba(92,213,221,0.2),_transparent_70%)]"></div>
+        <div className="absolute top-1/3 -right-24 h-72 w-72 rounded-full bg-[radial-gradient(circle_at_top,_rgba(92,213,221,0.18),_transparent_70%)]"></div>
+        <div className="absolute bottom-24 left-1/3 h-64 w-64 rounded-full bg-[radial-gradient(circle_at_top,_rgba(15,137,192,0.16),_transparent_70%)]"></div>
         <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-[rgba(15,23,42,0.08)] via-transparent to-transparent"></div>
       </div>
       <div className="relative max-w-7xl mx-auto px-6 py-8">
@@ -195,11 +222,7 @@ export default function Home() {
               <ConnectButton showBalance={false} accountStatus="address" chainStatus="icon" />
               {!isConnected && manualAddress && (
                 <button
-                  onClick={() => {
-                    setManualAddress('');
-                    setPrivateKey('');
-                    setIsWalletDeployed(false);
-                  }}
+                  onClick={handleDisconnectDevKey}
                   className="btn-danger"
                 >
                   Disconnect Dev Key
@@ -226,51 +249,117 @@ export default function Home() {
                 </button>
               </div>
               {showSetupSteps && (
-                <div className="relative mt-3 pl-6 text-sm text-slate-700">
-                  <div className="absolute left-3 top-1 bottom-1 w-px bg-slate-200"></div>
-                  <div className="relative flex items-center justify-between gap-4 py-1.5">
-                    <span>1. Deploy AA wallet</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${isWalletDeployed ? 'bg-[#5CD5DD]/20 text-info' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
-                      {isWalletDeployed ? 'Done' : 'Pending'}
-                    </span>
+                <div className="relative mt-3 text-sm text-slate-700">
+                  <div className="absolute left-2 top-1 bottom-1 w-px bg-slate-200"></div>
+                  <div className="flex items-center gap-3 py-1.5">
+                    <div className="relative w-4 flex-shrink-0">
+                      <span
+                        className={`absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full ${
+                          isWalletDeployed
+                            ? 'bg-emerald-400/90 ring-2 ring-emerald-200/70'
+                            : 'bg-rose-400/90 ring-2 ring-rose-200/70'
+                        }`}
+                        aria-hidden
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-4 flex-1">
+                      <span>1. Deploy AA wallet</span>
+                      <span className={`rounded-full px-2 py-0.5 text-xs ${isWalletDeployed ? 'bg-[#5CD5DD]/20 text-info' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
+                        {isWalletDeployed ? 'Done' : 'Pending'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="relative flex items-center justify-between gap-4 py-1.5">
-                    <span>2. Fund your AA wallet</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${isWalletFunded ? 'bg-[#5CD5DD]/20 text-info' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
-                      {isWalletFunded ? 'Done' : 'Pending'}
-                    </span>
+                  <div className="flex items-center gap-3 py-1.5">
+                    <div className="relative w-4 flex-shrink-0">
+                      <span
+                        className={`absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full ${
+                          isWalletFunded
+                            ? 'bg-emerald-400/90 ring-2 ring-emerald-200/70'
+                            : 'bg-rose-400/90 ring-2 ring-rose-200/70'
+                        }`}
+                        aria-hidden
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-4 flex-1">
+                      <span>2. Fund your AA wallet</span>
+                      <span className={`rounded-full px-2 py-0.5 text-xs ${isWalletFunded ? 'bg-[#5CD5DD]/20 text-info' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
+                        {isWalletFunded ? 'Done' : 'Pending'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="relative flex items-center justify-between gap-4 py-1.5">
-                    <span>3. Create and Authorize Vault</span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${
-                        vaultAddress && vaultExecutorReady
-                          ? 'bg-[#5CD5DD]/20 text-info'
-                          : vaultAddress
-                          ? 'status-accent'
+                  <div className="flex items-center gap-3 py-1.5">
+                    <div className="relative w-4 flex-shrink-0">
+                      <span
+                        className={`absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full ${
+                          vaultAddress && vaultExecutorReady
+                            ? 'bg-emerald-400/90 ring-2 ring-emerald-200/70'
+                            : 'bg-rose-400/90 ring-2 ring-rose-200/70'
+                        }`}
+                        aria-hidden
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-4 flex-1">
+                      <span>3. Create and Authorize Vault</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${
+                          vaultAddress && vaultExecutorReady
+                            ? 'bg-[#5CD5DD]/20 text-info'
+                            : vaultAddress
+                            ? 'status-accent'
+                              : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'
+                        }`}
+                      >
+                        {vaultAddress && vaultExecutorReady ? 'Done' : vaultAddress ? 'In progress' : 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 py-1.5">
+                    <div className="relative w-4 flex-shrink-0">
+                      <span
+                        className={`absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full ${
+                          vaultAllowanceApproved
+                            ? 'bg-emerald-400/90 ring-2 ring-emerald-200/70'
+                            : 'bg-rose-400/90 ring-2 ring-rose-200/70'
+                        }`}
+                        aria-hidden
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-4 flex-1">
+                      <span>4. Approve Vault Allowance</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${
+                          vaultAllowanceApproved
+                            ? 'bg-[#5CD5DD]/20 text-info'
                             : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'
-                      }`}
-                    >
-                      {vaultAddress && vaultExecutorReady ? 'Done' : vaultAddress ? 'In progress' : 'Pending'}
-                    </span>
+                        }`}
+                      >
+                        {vaultAllowanceApproved ? 'Done' : 'Pending'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="relative flex items-center justify-between gap-4 py-1.5">
-                    <span>4. Approve Vault Allowance</span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${
-                        vaultAllowanceApproved
-                          ? 'bg-[#5CD5DD]/20 text-info'
-                          : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'
-                      }`}
-                    >
-                      {vaultAllowanceApproved ? 'Done' : 'Pending'}
-                    </span>
-                  </div>
-                  <div className="relative flex items-center justify-between gap-4 py-1.5">
-                    <span>5. Execute via Agent</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${vaultExecutorReady ? 'status-accent' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
-                      {vaultExecutorReady ? 'Ready' : 'Locked'}
-                    </span>
+                  <div className="flex items-center gap-3 py-1.5">
+                    <div className="relative w-4 flex-shrink-0">
+                      <span
+                        className={`absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full ${
+                          vaultExecutorReady && vaultAllowanceApproved && vaultAddress
+                            ? 'bg-emerald-400/90 ring-2 ring-emerald-200/70'
+                            : 'bg-rose-400/90 ring-2 ring-rose-200/70'
+                        }`}
+                        aria-hidden
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-4 flex-1">
+                      <span>5. Execute via Agent</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${
+                          vaultExecutorReady && vaultAllowanceApproved && vaultAddress
+                            ? 'status-accent'
+                            : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'
+                        }`}
+                      >
+                        {vaultExecutorReady && vaultAllowanceApproved && vaultAddress ? 'Ready' : 'Locked'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -288,13 +377,10 @@ export default function Home() {
             <VaultManager
               aaWalletAddress={signerAddress}
               privateKey={effectivePrivateKey}
-              onVaultReady={(address, executorReady) => {
-                setVaultAddress(address);
-                setVaultExecutorReady(executorReady);
-              }}
+              onVaultReady={handleVaultReady}
               onAllowanceStatusChange={setVaultAllowanceApproved}
               refreshTrigger={refreshTrigger}
-              onRefresh={() => setRefreshTrigger(prev => prev + 1)}
+              onRefresh={handleRefresh}
               useVault={useVault}
               vaultExecutorReady={vaultExecutorReady}
             />
@@ -319,10 +405,9 @@ export default function Home() {
                     privateKey={effectivePrivateKey}
                     vaultAddress={vaultAddress}
                     useVault={useVault && vaultExecutorReady}
-                    onToggleVault={(value) => setUseVault(value)}
+                    onToggleVault={handleToggleVault}
                     vaultToggleDisabled={!vaultExecutorReady}
-                    refreshTrigger={refreshTrigger}
-                    onTransactionExecuted={() => setRefreshTrigger(prev => prev + 1)}
+                    onTransactionExecuted={handleTransactionExecuted}
                   />
                 </div>
               </>
@@ -340,6 +425,9 @@ export default function Home() {
               <div className="text-sm font-semibold text-slate-900">SPARK AI Hackathon</div>
               <p className="mt-1 text-sm text-slate-500">
                 感谢赞助方 Kite AI 以及举办方 ETH Panda 与 LX Dao 的支持。
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                Thanks to sponsor Kite AI and organizers ETH Panda and LX Dao for their support.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-4">

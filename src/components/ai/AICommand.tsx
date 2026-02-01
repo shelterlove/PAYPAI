@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState, memo } from 'react';
 import Image from 'next/image';
 import { ethers } from 'ethers';
 import { useAccount, useWalletClient } from 'wagmi';
@@ -10,6 +10,8 @@ import { KITE_CONTRACTS } from '@/types';
 import { formatAddress } from '@/lib/wallet';
 import agentAvatar from '../../../images/agent_profile.png';
 import userAvatar from '../../../images/user_profile.png';
+import agentAvatarDark from '../../../images/agent_profile_dark.jpg';
+import userAvatarDark from '../../../images/user_profile_dark.jpg';
 
 type ChatMessage = {
   role: 'user' | 'assistant';
@@ -23,7 +25,6 @@ type ChatMessage = {
 interface AICommandProps {
   signerAddress: string;
   privateKey: string;
-  refreshTrigger?: number;
   onTransactionExecuted?: () => void;
   vaultAddress?: string;
   useVault?: boolean;
@@ -31,10 +32,9 @@ interface AICommandProps {
   vaultToggleDisabled?: boolean;
 }
 
-export default function AICommand({
+function AICommand({
   signerAddress,
   privateKey,
-  refreshTrigger,
   onTransactionExecuted,
   vaultAddress,
   useVault,
@@ -64,6 +64,7 @@ export default function AICommand({
   const [pendingRecipientName, setPendingRecipientName] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const { isConnected } = useAccount();
   const { data: walletClient, isLoading: isWalletClientLoading } = useWalletClient({
@@ -72,6 +73,17 @@ export default function AICommand({
 
   const vaultMode = Boolean(useVault && vaultAddress);
   const explorerBase = kiteTestnetChain.blockExplorers?.default.url;
+
+  useEffect(() => {
+    const updateTheme = () => {
+      if (typeof document === 'undefined') return;
+      setIsDarkMode(document.documentElement.classList.contains('theme-dark'));
+    };
+    updateTheme();
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (vaultMode) {
@@ -98,8 +110,6 @@ export default function AICommand({
       setTokenDecimals(String(KITE_CONTRACTS.SETTLEMENT_TOKEN_DECIMALS));
     }
   }, [parsedResult, vaultMode]);
-
-  const assistantMessages = useMemo(() => messages, [messages]);
 
   const toPlainMessages = (items: ChatMessage[]) =>
     items
@@ -293,7 +303,7 @@ export default function AICommand({
       setPendingRecipientName(null);
     }
 
-    const nextMessages = [...assistantMessages, { role: 'user' as const, content: trimmed }];
+    const nextMessages = [...messages, { role: 'user' as const, content: trimmed }];
     setMessages(nextMessages);
     setInput('');
     setLoading(true);
@@ -611,14 +621,20 @@ export default function AICommand({
       </div>
 
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="rounded-2xl border border-[color:var(--pp-border)] bg-white/90 shadow-[var(--pp-shadow)] flex-1 flex flex-col min-h-0">
+        <div className="rounded-2xl border border-[color:var(--pp-chat-card-border)] bg-[color:var(--pp-chat-card-bg)] shadow-[var(--pp-shadow)] flex-1 flex flex-col min-h-0">
           <div ref={messagesContainerRef} className="flex-1 overflow-auto p-4 space-y-4">
             {messages.map((message, index) => (
               <div key={`${message.role}-${index}`} className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
                 {message.role === 'assistant' && (
-                  <div className="h-9 w-9 rounded-full overflow-hidden bg-[var(--pp-gradient)] ring-1 ring-white/70 shadow-sm">
+                  <div
+                    className={`h-9 w-9 rounded-full overflow-hidden shadow-sm ${
+                      isDarkMode
+                        ? 'bg-[#1F2A44] ring-1 ring-white/20'
+                        : 'bg-[var(--pp-gradient)] ring-1 ring-white/70'
+                    }`}
+                  >
                     <Image
-                      src={agentAvatar}
+                      src={isDarkMode ? agentAvatarDark : agentAvatar}
                       alt="Agent avatar"
                       width={36}
                       height={36}
@@ -630,13 +646,13 @@ export default function AICommand({
                   className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
                     message.role === 'assistant'
                       ? message.kind === 'confirm'
-                        ? 'border border-[#5A39BA]/30 bg-[#F5F2FF] text-[#27308A]'
+                        ? 'border border-[color:var(--pp-confirm-border)] bg-[color:var(--pp-confirm-bg)] text-[color:var(--pp-confirm-text)]'
                         : message.kind === 'status'
                           ? message.status === 'success'
-                            ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                            : 'border border-rose-200 bg-rose-50 text-rose-600'
+                            ? 'border border-[color:var(--pp-success-border)] bg-[color:var(--pp-success-bg)] text-[color:var(--pp-success-text)]'
+                            : 'border border-[color:var(--pp-error-border)] bg-[color:var(--pp-error-bg)] text-[color:var(--pp-error-text)]'
                           : 'border border-slate-200 bg-slate-50 text-slate-600'
-                      : 'border border-[color:var(--pp-border)] bg-white text-slate-700'
+                      : 'border border-[color:var(--pp-user-border)] bg-[color:var(--pp-user-bg)] text-[color:var(--pp-user-text)]'
                   }`}
                 >
                   {message.kind === 'confirm' ? (
@@ -652,7 +668,7 @@ export default function AICommand({
                       {message.details && (
                         <div className="space-y-2">
                           {message.details.map((detail) => (
-                            <div key={detail.label} className="flex items-center justify-between rounded-xl bg-white/80 px-3 py-2 text-sm">
+                            <div key={detail.label} className="flex items-center justify-between rounded-xl bg-white/80 px-3 py-2 text-sm theme-dark:bg-slate-900/60">
                               <span className="text-slate-500">{detail.label}</span>
                               <span className="font-mono text-slate-700">{detail.value}</span>
                             </div>
@@ -666,7 +682,7 @@ export default function AICommand({
                         {message.status === 'success' ? 'Transaction Confirmed' : 'Transaction Failed'}
                       </div>
                       {message.status === 'success' && message.hash ? (
-                        <div className="flex items-center justify-between rounded-xl bg-white/80 px-3 py-2 text-sm">
+                        <div className="flex items-center justify-between rounded-xl bg-white/80 px-3 py-2 text-sm theme-dark:bg-slate-900/60">
                           <span className="text-slate-500">Hash</span>
                           <span className="flex items-center gap-2">
                             <span className="font-mono text-slate-700">{formatHash(message.hash)}</span>
@@ -700,9 +716,15 @@ export default function AICommand({
                   )}
                 </div>
                 {message.role === 'user' && (
-                  <div className="h-9 w-9 rounded-full overflow-hidden bg-slate-200 ring-1 ring-white/70 shadow-sm">
+                  <div
+                    className={`h-9 w-9 rounded-full overflow-hidden shadow-sm ${
+                      isDarkMode
+                        ? 'bg-[#1B2438] ring-1 ring-white/20'
+                        : 'bg-slate-200 ring-1 ring-white/70'
+                    }`}
+                  >
                     <Image
-                      src={userAvatar}
+                      src={isDarkMode ? userAvatarDark : userAvatar}
                       alt="User avatar"
                       width={36}
                       height={36}
@@ -714,9 +736,15 @@ export default function AICommand({
             ))}
             {isTyping && (
               <div className="flex items-start gap-3">
-                <div className="h-9 w-9 rounded-full overflow-hidden bg-[var(--pp-gradient)] ring-1 ring-white/70 shadow-sm">
+                <div
+                  className={`h-9 w-9 rounded-full overflow-hidden shadow-sm ${
+                    isDarkMode
+                      ? 'bg-[#1F2A44] ring-1 ring-white/20'
+                      : 'bg-[var(--pp-gradient)] ring-1 ring-white/70'
+                  }`}
+                >
                   <Image
-                    src={agentAvatar}
+                    src={isDarkMode ? agentAvatarDark : agentAvatar}
                     alt="Agent avatar"
                     width={36}
                     height={36}
@@ -825,14 +853,11 @@ export default function AICommand({
               </button>
             </div>
 
-            {useVault && vaultAddress && (
-              <p className="text-xs text-info">
-                Vault mode uses settlement token transfers only.
-              </p>
-            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+export default memo(AICommand);

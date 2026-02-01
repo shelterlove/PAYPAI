@@ -135,8 +135,20 @@ export default function VaultExecutor({
       <div className="space-y-4">
         <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
           <div className="text-xs text-slate-500 mb-1">Executor Address</div>
-          <div className="text-xs font-mono text-blue-600 break-all">
-            {executorAddress ? formatAddress(executorAddress) : 'Not configured'}
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-xs font-mono text-blue-600 break-all">
+              {executorAddress ? formatAddress(executorAddress) : 'Not configured'}
+            </div>
+            {executorAddress && (
+              <button
+                type="button"
+                onClick={() => navigator.clipboard?.writeText(executorAddress)}
+                className="btn-tertiary text-xs px-2 py-0.5"
+                title="Copy"
+              >
+                ⧉
+              </button>
+            )}
           </div>
         </div>
 

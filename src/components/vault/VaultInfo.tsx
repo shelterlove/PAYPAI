@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, memo } from 'react';
 import { ethers, BigNumberish } from 'ethers';
 import { formatAddress } from '@/lib/wallet';
 import { SpendingRule } from '@/types';
@@ -39,7 +39,7 @@ interface VaultData {
   };
 }
 
-export default function VaultInfo({
+function VaultInfo({
   vaultAddress,
   aaWalletAddress = '',
   privateKey = '',
@@ -61,14 +61,22 @@ export default function VaultInfo({
   const [remainingBudget, setRemainingBudget] = useState<string | null>(null);
   const [remainingBudgetSymbol, setRemainingBudgetSymbol] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(true);
+  const fetchAbortRef = useRef<AbortController | null>(null);
+  const lastVaultKeyRef = useRef('');
 
-  const fetchVaultInfo = async (showRefreshing = false) => {
+  const fetchVaultInfo = useCallback(async (showRefreshing = false) => {
     try {
       setError('');
       if (showRefreshing) setRefreshing(true);
       else setLoading(true);
 
-      const response = await fetch(`/api/vault/info?address=${vaultAddress}`);
+      fetchAbortRef.current?.abort();
+      const controller = new AbortController();
+      fetchAbortRef.current = controller;
+
+      const response = await fetch(`/api/vault/info?address=${vaultAddress}`, {
+        signal: controller.signal
+      });
 
       if (!response.ok) {
         const message = await response.text();
@@ -79,18 +87,30 @@ export default function VaultInfo({
       if (data?.error) {
         setError(data.error);
       }
-      setVaultData(data);
+      const payloadKey = JSON.stringify({
+        admin: data?.vault?.admin,
+        allowance: data?.allowance,
+        allowanceRaw: data?.allowanceRaw,
+        tokenBalance: data?.tokenBalance,
+        currentBudget: data?.currentBudget,
+        executor: data?.executor?.authorized
+      });
+      if (payloadKey !== lastVaultKeyRef.current) {
+        lastVaultKeyRef.current = payloadKey;
+        setVaultData(data);
+      }
       if (typeof data?.executor?.authorized === 'boolean') {
         onExecutorStatusChange?.(Boolean(data.executor.authorized));
       }
     } catch (error) {
+      if ((error as Error)?.name === 'AbortError') return;
       console.error('Error fetching vault info:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch vault info');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [vaultAddress, onExecutorStatusChange]);
 
   useEffect(() => {
     const handleVisibility = () => setIsVisible(!document.hidden);
@@ -101,51 +121,58 @@ export default function VaultInfo({
 
   useEffect(() => {
     fetchVaultInfo();
-
-    // Refresh every 25 seconds when tab is visible
-    const interval = setInterval(() => {
-      if (!isVisible) return;
-      fetchVaultInfo(true);
-    }, 25000);
-    return () => clearInterval(interval);
-  }, [vaultAddress, isVisible]);
+  }, [fetchVaultInfo]);
 
   useEffect(() => {
-    if (!vaultAddress) return;
     if (typeof refreshTrigger === 'number') {
       fetchVaultInfo(true);
     }
-  }, [refreshTrigger, vaultAddress]);
+  }, [refreshTrigger, fetchVaultInfo]);
 
   useEffect(() => {
+    if (!isVisible) return;
+    const interval = setInterval(() => {
+      fetchVaultInfo(true);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchVaultInfo, isVisible]);
+
+  const fetchActivitySummary = useCallback(async () => {
     if (!vaultAddress) return;
-    let cancelled = false;
-
-    const fetchActivitySummary = async () => {
-      try {
-        if (!isVisible) return;
-        const res = await fetch(`/api/vault/activity?address=${vaultAddress}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (cancelled) return;
-        if (data && typeof data.remainingBudget !== 'undefined') {
-          setRemainingBudget(data.remainingBudget);
-          setRemainingBudgetSymbol(data.tokenSymbol || null);
-        } else {
-          setRemainingBudget(null);
-          setRemainingBudgetSymbol(null);
-        }
-      } catch {
-        // ignore
+    try {
+      if (!isVisible) return;
+      const res = await fetch(`/api/vault/activity?address=${vaultAddress}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && typeof data.remainingBudget !== 'undefined') {
+        setRemainingBudget(data.remainingBudget);
+        setRemainingBudgetSymbol(data.tokenSymbol || null);
+      } else {
+        setRemainingBudget(null);
+        setRemainingBudgetSymbol(null);
       }
-    };
+    } catch {
+      // ignore
+    }
+  }, [vaultAddress, isVisible]);
 
+  useEffect(() => {
     fetchActivitySummary();
+  }, [fetchActivitySummary]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [vaultAddress, refreshTrigger, isVisible]);
+  useEffect(() => {
+    if (typeof refreshTrigger === 'number') {
+      fetchActivitySummary();
+    }
+  }, [refreshTrigger, fetchActivitySummary]);
+
+  useEffect(() => {
+    if (!isVisible || !vaultAddress) return;
+    const interval = setInterval(() => {
+      fetchActivitySummary();
+    }, 45000);
+    return () => clearInterval(interval);
+  }, [fetchActivitySummary, isVisible, vaultAddress]);
 
   useEffect(() => {
     if (vaultData?.executor) {
@@ -255,7 +282,7 @@ export default function VaultInfo({
       </div>
 
       {needsApproval && (
-        <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
+        <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-slate-700 theme-alert">
           <span>Vault allowance is zero. Approve the vault to enable spending.</span>
           <button type="button" onClick={() => setShowApproveModal(true)} className="btn-secondary text-xs px-3 py-1">
             Approve Vault
@@ -367,7 +394,7 @@ export default function VaultInfo({
                             ))}
                           </div>
                         ) : (
-                          <div className="mt-1 min-h-[28px] text-base text-slate-700">All recipients allowed</div>
+                          <div className="mt-1 min-h-[28px] text-base text-slate-700">ALL</div>
                         )}
                       </div>
                       <div className="min-h-[56px]">
@@ -521,6 +548,7 @@ export default function VaultInfo({
               onApproved={() => {
                 setShowApproveModal(false);
                 fetchVaultInfo(true);
+                onAllowanceStatusChange?.(true);
               }}
             />
           </div>
@@ -529,6 +557,8 @@ export default function VaultInfo({
     </div>
   );
 }
+
+export default memo(VaultInfo);
 
 function InfoRow({
   label,
