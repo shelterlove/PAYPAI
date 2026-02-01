@@ -25,6 +25,9 @@ export async function POST(request: NextRequest) {
 
     // Wait for transaction
     const receipt = await tx.wait();
+    if (!receipt) {
+      throw new Error('Transaction receipt not available');
+    }
 
     return NextResponse.json({
       success: true,
