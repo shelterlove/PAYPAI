@@ -1,5 +1,7 @@
 <div align="center">
 
+<p><strong>🚀 在线演示：</strong><a href="https://paypaisparkaihackthon.vercel.app/">https://paypaisparkaihackthon.vercel.app/</a> 🎯</p>
+
 <img src="./images/photo_2026-01-31_21-03-42.png" alt="PayPai Logo" width="200">
 
 # PayPai - AI 智能合约钱包
