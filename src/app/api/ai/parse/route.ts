@@ -58,8 +58,7 @@ export async function POST(request: NextRequest) {
             action: parsed.action ?? 'send',
             recipient: parsed.recipient,
             amount: String(parsed.amount ?? '0'),
-            token: parsed.token,
-            error: parsed.error
+            token: parsed.token
           })
         : null;
 
