@@ -4,6 +4,11 @@ const path = require('path');
 const nextConfig = {
   reactStrictMode: true,
   webpack: (config, { isServer }) => {
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      '@react-native-async-storage/async-storage': false,
+      'pino-pretty': false,
+    };
     if (!isServer) {
       const dotenvShim = path.resolve(__dirname, 'src/lib/shims/dotenv-browser.ts');
       config.resolve.alias = {
