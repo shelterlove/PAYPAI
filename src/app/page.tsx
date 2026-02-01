@@ -5,6 +5,7 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import sparkHackathonLogo from '../../images/spark_ai_hackthon.png';
 import kiteAiLogo from '../../images/kite_ai.png';
 import ethPandaLogo from '../../images/ETH_Panda.png';
@@ -30,6 +31,9 @@ export default function Home() {
   const [showSetupSteps, setShowSetupSteps] = useState(true);
   const [stickyTop, setStickyTop] = useState(112);
   const headerRef = useRef<HTMLDivElement | null>(null);
+  const themeToggle = (
+    <ThemeToggle className="absolute top-6 right-6 z-20" />
+  );
 
   const { address, isConnected } = useAccount();
 
@@ -93,7 +97,8 @@ export default function Home() {
   // Show loading during SSR
   if (!mounted) {
     return (
-      <main className="relative z-[1] min-h-screen bg-gradient-to-b from-[#EEF7FF] to-[#F7F0FF] glass-theme">
+      <main className="relative z-[1] min-h-screen page-shell glass-theme">
+        {themeToggle}
         <div className="max-w-3xl mx-auto px-6 py-16">
           <header className="text-center">
             <div className="flex flex-col items-center gap-4">
@@ -104,7 +109,7 @@ export default function Home() {
                   width={112}
                   height={112}
                   priority
-                  className="h-28 w-28 object-contain"
+                  className="h-28 w-28 object-contain brightness-90"
                 />
               </div>
               <h1 className="paypai-logo text-5xl tracking-tight">
@@ -121,7 +126,8 @@ export default function Home() {
   // Show connect screen if no wallet is connected
   if (!signerAddress) {
     return (
-      <main className="relative z-[1] min-h-screen bg-gradient-to-b from-[#EEF7FF] to-[#F7F0FF] glass-theme">
+      <main className="relative z-[1] min-h-screen page-shell glass-theme">
+        {themeToggle}
         <div className="max-w-3xl mx-auto px-6 py-16">
           <header className="text-center">
             <div className="flex flex-col items-center gap-4">
@@ -132,7 +138,7 @@ export default function Home() {
                   width={112}
                   height={112}
                   priority
-                  className="h-28 w-28 object-contain"
+                  className="h-28 w-28 object-contain brightness-90"
                 />
               </div>
               <h1 className="paypai-logo text-5xl tracking-tight">
@@ -153,11 +159,12 @@ export default function Home() {
   }
 
   return (
-    <main className="relative z-[1] min-h-screen bg-gradient-to-b from-[#EEF7FF] to-[#F7F0FF] glass-theme">
+    <main className="relative z-[1] min-h-screen page-shell glass-theme">
+      {themeToggle}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-32 right-0 h-96 w-96 rounded-full bg-[radial-gradient(circle_at_top,_rgba(0,231,255,0.22),_transparent_70%)]"></div>
         <div className="absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-[radial-gradient(circle_at_top,_rgba(154,85,255,0.2),_transparent_70%)]"></div>
-        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-[#EEF7FF] via-white/50 to-transparent"></div>
+        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-[rgba(15,23,42,0.08)] via-transparent to-transparent"></div>
       </div>
       <div className="relative max-w-7xl mx-auto px-6 py-8">
         <header ref={headerRef} className="mb-8 card-soft p-6">
@@ -171,7 +178,7 @@ export default function Home() {
                     width={80}
                     height={80}
                     priority
-                    className="h-20 w-20 object-contain"
+                    className="h-20 w-20 object-contain brightness-90"
                   />
                 </div>
                 <h1 className="paypai-logo text-4xl tracking-tight">
@@ -183,8 +190,8 @@ export default function Home() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="pill bg-[#5CD5DD]/20 text-[#0F89C0]">Wallet Connected</span>
-              <span className="pill bg-[#5A39BA]/10 text-[#5A39BA]">{networkLabel}</span>
+              <span className="pill bg-[#5CD5DD]/20 text-info">Wallet Connected</span>
+              <span className="pill pill-accent">{networkLabel}</span>
               <ConnectButton showBalance={false} accountStatus="address" chainStatus="icon" />
               {!isConnected && manualAddress && (
                 <button
@@ -223,13 +230,13 @@ export default function Home() {
                   <div className="absolute left-3 top-1 bottom-1 w-px bg-slate-200"></div>
                   <div className="relative flex items-center justify-between gap-4 py-1.5">
                     <span>1. Deploy AA wallet</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${isWalletDeployed ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${isWalletDeployed ? 'bg-[#5CD5DD]/20 text-info' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
                       {isWalletDeployed ? 'Done' : 'Pending'}
                     </span>
                   </div>
                   <div className="relative flex items-center justify-between gap-4 py-1.5">
                     <span>2. Fund your AA wallet</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${isWalletFunded ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${isWalletFunded ? 'bg-[#5CD5DD]/20 text-info' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
                       {isWalletFunded ? 'Done' : 'Pending'}
                     </span>
                   </div>
@@ -238,9 +245,9 @@ export default function Home() {
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs ${
                         vaultAddress && vaultExecutorReady
-                          ? 'bg-[#5CD5DD]/20 text-[#0F89C0]'
+                          ? 'bg-[#5CD5DD]/20 text-info'
                           : vaultAddress
-                            ? 'bg-[#5A39BA]/10 text-[#5A39BA]'
+                          ? 'status-accent'
                             : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'
                       }`}
                     >
@@ -252,7 +259,7 @@ export default function Home() {
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs ${
                         vaultAllowanceApproved
-                          ? 'bg-[#5CD5DD]/20 text-[#0F89C0]'
+                          ? 'bg-[#5CD5DD]/20 text-info'
                           : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'
                       }`}
                     >
@@ -261,7 +268,7 @@ export default function Home() {
                   </div>
                   <div className="relative flex items-center justify-between gap-4 py-1.5">
                     <span>5. Execute via Agent</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${vaultExecutorReady ? 'bg-[#5A39BA]/10 text-[#5A39BA]' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${vaultExecutorReady ? 'status-accent' : 'bg-white text-slate-500 border border-[color:var(--pp-border)]'}`}>
                       {vaultExecutorReady ? 'Ready' : 'Locked'}
                     </span>
                   </div>
@@ -340,7 +347,7 @@ export default function Home() {
                 href="https://github.com/CasualHackathon/SPARK-AI-Hackathon"
                 target="_blank"
                 rel="noreferrer"
-                className="h-10 w-auto"
+                className="logo-chip h-12 w-auto"
                 title="SPARK AI Hackathon"
               >
                 <Image
@@ -348,14 +355,14 @@ export default function Home() {
                   alt="SPARK AI Hackathon"
                   width={160}
                   height={40}
-                  className="h-10 w-auto object-contain"
+                  className="h-8 w-auto object-contain"
                 />
               </a>
               <a
                 href="https://gokite.ai/"
                 target="_blank"
                 rel="noreferrer"
-                className="h-10 w-auto"
+                className="logo-chip h-12 w-auto"
                 title="Kite AI"
               >
                 <Image
@@ -363,14 +370,14 @@ export default function Home() {
                   alt="Kite AI"
                   width={120}
                   height={40}
-                  className="h-10 w-auto object-contain"
+                  className="h-8 w-auto object-contain"
                 />
               </a>
               <a
                 href="https://ethpanda.org/"
                 target="_blank"
                 rel="noreferrer"
-                className="h-10 w-auto"
+                className="logo-chip h-12 w-auto"
                 title="ETH Panda"
               >
                 <Image
@@ -378,14 +385,14 @@ export default function Home() {
                   alt="ETH Panda"
                   width={120}
                   height={40}
-                  className="h-10 w-auto object-contain"
+                  className="h-8 w-auto object-contain"
                 />
               </a>
               <a
                 href="https://lxdao.io/"
                 target="_blank"
                 rel="noreferrer"
-                className="h-10 w-auto"
+                className="logo-chip h-12 w-auto"
                 title="LX Dao"
               >
                 <Image
@@ -393,7 +400,7 @@ export default function Home() {
                   alt="LX Dao"
                   width={120}
                   height={40}
-                  className="h-10 w-auto object-contain"
+                  className="h-8 w-auto object-contain"
                 />
               </a>
             </div>

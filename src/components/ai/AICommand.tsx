@@ -63,6 +63,7 @@ export default function AICommand({
   const [namedRecipients, setNamedRecipients] = useState<Record<string, string>>({});
   const [pendingRecipientName, setPendingRecipientName] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   const { isConnected } = useAccount();
   const { data: walletClient, isLoading: isWalletClientLoading } = useWalletClient({
@@ -585,9 +586,12 @@ export default function AICommand({
   };
 
   useEffect(() => {
-    if (!messagesEndRef.current) return;
     const id = requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      if (!messagesContainerRef.current) return;
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     });
     return () => cancelAnimationFrame(id);
   }, [messages]);
@@ -608,7 +612,7 @@ export default function AICommand({
 
       <div className="flex-1 flex flex-col min-h-0">
         <div className="rounded-2xl border border-[color:var(--pp-border)] bg-white/90 shadow-[var(--pp-shadow)] flex-1 flex flex-col min-h-0">
-          <div className="flex-1 overflow-auto p-4 space-y-4">
+          <div ref={messagesContainerRef} className="flex-1 overflow-auto p-4 space-y-4">
             {messages.map((message, index) => (
               <div key={`${message.role}-${index}`} className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
                 {message.role === 'assistant' && (
@@ -637,7 +641,7 @@ export default function AICommand({
                 >
                   {message.kind === 'confirm' ? (
                     <div className="space-y-3">
-                      <div className="text-xs uppercase tracking-[0.16em] text-[#5A39BA] font-semibold">
+                      <div className="text-xs uppercase tracking-[0.16em] text-accent font-semibold">
                         Transaction Review
                       </div>
                       {message.content && (
@@ -822,7 +826,7 @@ export default function AICommand({
             </div>
 
             {useVault && vaultAddress && (
-              <p className="text-xs text-[#0F89C0]">
+              <p className="text-xs text-info">
                 Vault mode uses settlement token transfers only.
               </p>
             )}

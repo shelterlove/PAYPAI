@@ -62,6 +62,7 @@ export default function WalletInfo({
   const [showAddToken, setShowAddToken] = useState(true);
   const [showRecentActivity, setShowRecentActivity] = useState(false);
   const [tokenRefreshTick, setTokenRefreshTick] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
 
   // Get wagmi connection status
   const { isConnected } = useAccount();
@@ -71,16 +72,12 @@ export default function WalletInfo({
     chainId: kiteTestnetChain.id,
   });
 
-  // Debug: log wallet client status
   useEffect(() => {
-    console.log('=== WalletInfo Debug ===');
-    console.log('signerAddress:', signerAddress);
-    console.log('privateKey:', privateKey);
-    console.log('privateKey length:', privateKey?.length);
-    console.log('isConnected (wagmi):', isConnected);
-    console.log('walletClient:', walletClient ? 'exists' : 'null');
-    console.log('isWalletClientLoading:', isWalletClientLoading);
-  }, [signerAddress, privateKey, isConnected, walletClient, isWalletClientLoading]);
+    const handleVisibility = () => setIsVisible(!document.hidden);
+    handleVisibility();
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
 
   const fetchWalletInfo = async (showRefreshing = false) => {
     try {
@@ -114,10 +111,13 @@ export default function WalletInfo({
   useEffect(() => {
     fetchWalletInfo();
 
-    // Refresh every 10 seconds
-    const interval = setInterval(() => fetchWalletInfo(true), 10000);
+    // Refresh every 20 seconds when tab is visible
+    const interval = setInterval(() => {
+      if (!isVisible) return;
+      fetchWalletInfo(true);
+    }, 20000);
     return () => clearInterval(interval);
-  }, [signerAddress, refreshTrigger]);
+  }, [signerAddress, refreshTrigger, isVisible]);
 
   const handleDeploy = async () => {
     try {
@@ -418,6 +418,7 @@ export default function WalletInfo({
 
     const refreshTokenBalances = async () => {
       try {
+        if (!isVisible) return;
         const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_KITE_RPC_URL);
         const updated = await Promise.all(
           importedTokens.map(async (token) => {
@@ -472,7 +473,7 @@ export default function WalletInfo({
     return () => {
       cancelled = true;
     };
-  }, [walletData?.wallet?.address, refreshTrigger, tokenKey, tokenRefreshTick]);
+  }, [walletData?.wallet?.address, refreshTrigger, tokenKey, tokenRefreshTick, isVisible]);
 
   const aaBalance = Number(walletData?.balance ?? 0);
   const deploymentLabel = walletData?.wallet?.isDeployed ? 'Deployed' : 'Not Deployed';
@@ -516,7 +517,7 @@ export default function WalletInfo({
           <h2 className="text-xl font-semibold text-slate-900">Wallet</h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`pill text-xs ${walletData.wallet.isDeployed ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-600 border border-[color:var(--pp-border)]'}`}>
+          <span className={`pill text-xs ${walletData.wallet.isDeployed ? 'bg-[#5CD5DD]/20 text-info' : 'bg-white text-slate-600 border border-[color:var(--pp-border)]'}`}>
             {deploymentLabel}
           </span>
           <button

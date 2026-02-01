@@ -60,6 +60,7 @@ export default function VaultInfo({
   const [showExecutorModal, setShowExecutorModal] = useState(false);
   const [remainingBudget, setRemainingBudget] = useState<string | null>(null);
   const [remainingBudgetSymbol, setRemainingBudgetSymbol] = useState<string | null>(null);
+  const [isVisible, setIsVisible] = useState(true);
 
   const fetchVaultInfo = async (showRefreshing = false) => {
     try {
@@ -92,12 +93,22 @@ export default function VaultInfo({
   };
 
   useEffect(() => {
+    const handleVisibility = () => setIsVisible(!document.hidden);
+    handleVisibility();
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
+  useEffect(() => {
     fetchVaultInfo();
 
-    // Refresh every 15 seconds
-    const interval = setInterval(() => fetchVaultInfo(true), 15000);
+    // Refresh every 25 seconds when tab is visible
+    const interval = setInterval(() => {
+      if (!isVisible) return;
+      fetchVaultInfo(true);
+    }, 25000);
     return () => clearInterval(interval);
-  }, [vaultAddress]);
+  }, [vaultAddress, isVisible]);
 
   useEffect(() => {
     if (!vaultAddress) return;
@@ -112,6 +123,7 @@ export default function VaultInfo({
 
     const fetchActivitySummary = async () => {
       try {
+        if (!isVisible) return;
         const res = await fetch(`/api/vault/activity?address=${vaultAddress}`);
         if (!res.ok) return;
         const data = await res.json();
@@ -133,7 +145,7 @@ export default function VaultInfo({
     return () => {
       cancelled = true;
     };
-  }, [vaultAddress, refreshTrigger]);
+  }, [vaultAddress, refreshTrigger, isVisible]);
 
   useEffect(() => {
     if (vaultData?.executor) {
@@ -220,7 +232,7 @@ export default function VaultInfo({
           <h2 className="text-xl font-semibold text-slate-900">Vault</h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`pill text-xs ${isDeployed ? 'bg-[#5CD5DD]/20 text-[#0F89C0]' : 'bg-white text-slate-600 border border-[color:var(--pp-border)]'}`}>
+          <span className={`pill text-xs ${isDeployed ? 'bg-[#5CD5DD]/20 text-info' : 'bg-white text-slate-600 border border-[color:var(--pp-border)]'}`}>
             {deploymentLabel}
           </span>
           <button
@@ -262,7 +274,7 @@ export default function VaultInfo({
           className={`w-full rounded-xl border border-[color:var(--pp-border)] bg-white/90 px-4 py-3 shadow-[var(--pp-shadow)] flex items-center justify-between gap-4 text-left transition-all duration-200 ease-out hover:bg-white ${executorAuthorized ? '' : 'cursor-pointer'}`}
         >
           <span className="text-sm text-slate-600 font-semibold">Authorize Status</span>
-          <span className={`text-sm font-mono ${executorAuthorized ? 'text-[#0F89C0]' : 'text-amber-600'}`}>
+          <span className={`text-sm font-mono ${executorAuthorized ? 'text-info' : 'text-amber-600'}`}>
             {executorAuthorized ? 'Authorized' : 'Not Authorized'}
           </span>
         </button>

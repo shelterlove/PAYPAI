@@ -252,7 +252,7 @@ export default function SendTransaction({
             onClick={() => setAssetType('ERC20')}
             className={`px-3 py-2 rounded text-sm font-semibold ${
               assetType === 'ERC20'
-                ? 'bg-[#0F89C0] text-white'
+                ? 'bg-[#2AA6FF] text-white'
                 : 'bg-white border border-[color:var(--pp-border)] text-slate-600'
             }`}
           >
@@ -296,7 +296,7 @@ export default function SendTransaction({
               </div>
             </div>
             {vaultMode && (
-              <p className="text-xs text-[#0F89C0]">
+              <p className="text-xs text-info">
                 Vault mode uses the settlement token only.
               </p>
             )}
