@@ -13,7 +13,7 @@
 
 [English](README.md) | [中文](README_CN.md)
 
-[🎥 演示视频](https://youtu.be/fRFlmEN_wS0) • [🎯 在线演示](#-演示展示) • [📖 项目文档](#-项目结构) • [🚀 快速开始](#-快速开始) • [💡 核心功能](#-核心功能)
+[🎥 演示视频](https://youtu.be/bNBuSJotYtc) • [🎯 在线演示](#-演示展示) • [📖 项目文档](#-项目结构) • [🚀 快速开始](#-快速开始) • [💡 核心功能](#-核心功能)
 
 </div>
 
@@ -87,7 +87,7 @@ PayPai：✅ "交易已发送！哈希：0xabcd..."
 ### 🎥 演示视频
 
 ```text
-https://youtu.be/fRFlmEN_wS0
+https://youtu.be/bNBuSJotYtc
 ```
 
 ### 🔗 在线演示

@@ -13,7 +13,7 @@
 
 [English](README.md) | [中文](README_CN.md)
 
-[🎥 Demo Video](https://youtu.be/fRFlmEN_wS0) • [🎯 Live Demo](#-demo) • [📖 Documentation](#-project-structure) • [🚀 Quick Start](#-quick-start) • [💡 Features](#-core-features)
+[🎥 Demo Video](https://youtu.be/bNBuSJotYtc) • [🎯 Live Demo](#-demo) • [📖 Documentation](#-project-structure) • [🚀 Quick Start](#-quick-start) • [💡 Features](#-core-features)
 
 </div>
 
@@ -86,7 +86,7 @@ PayPai: ✅ "Transaction sent! Hash: 0xabcd..."
 ### 🎥 Demo Video
 
 ```text
-https://youtu.be/fRFlmEN_wS0
+https://youtu.be/bNBuSJotYtc
 ```
 
 ### 🔗 Live Demo

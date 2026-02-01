@@ -52,7 +52,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const transaction = status === 'ready' && parsed ? generateTransaction(parsed) : null;
+    const transaction =
+      status === 'ready' && parsed && parsed.amount
+        ? generateTransaction({
+            action: parsed.action ?? 'send',
+            recipient: parsed.recipient,
+            amount: String(parsed.amount ?? '0'),
+            token: parsed.token,
+            error: parsed.error
+          })
+        : null;
 
     return NextResponse.json({
       success: true,
