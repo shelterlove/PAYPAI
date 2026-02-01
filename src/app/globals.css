@@ -26,6 +26,17 @@ body {
 }
 
 @layer components {
+  .paypai-logo {
+    font-family: var(--font-poppins), "Poppins", "Montserrat", sans-serif;
+    font-weight: 700;
+    font-size: 48px;
+    background: linear-gradient(to right, #009CFF, #6A31A5);
+    -webkit-background-clip: text;
+    color: transparent;
+    display: inline-block;
+    line-height: 1.05;
+  }
+
   .card {
     @apply rounded-[16px] border border-[color:var(--pp-border)] bg-white shadow-[var(--pp-shadow)];
   }

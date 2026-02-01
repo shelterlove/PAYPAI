@@ -9,6 +9,7 @@ import sparkHackathonLogo from '../../images/spark_ai_hackthon.png';
 import kiteAiLogo from '../../images/kite_ai.png';
 import ethPandaLogo from '../../images/ETH_Panda.png';
 import lxDaoLogo from '../../images/lxdao.svg';
+import paypaiLogo from '../../images/PayPai_LOGO.png';
 
 const WalletConnect = dynamic(() => import('@/components/wallet/WalletConnect'), { ssr: false });
 const WalletInfo = dynamic(() => import('@/components/wallet/WalletInfo'), { ssr: false });
@@ -65,6 +66,9 @@ export default function Home() {
   useEffect(() => {
     if (signerAddress) {
       setIsWalletDeployed(false);
+      setVaultAddress('');
+      setVaultExecutorReady(false);
+      setVaultAllowanceApproved(false);
     }
   }, [signerAddress]);
 
@@ -92,9 +96,14 @@ export default function Home() {
       <main className="min-h-screen bg-gradient-to-b from-[#F1F9FB] to-white">
         <div className="max-w-3xl mx-auto px-6 py-16">
           <header className="text-center">
-            <h1 className="text-5xl font-semibold text-slate-900 tracking-tight">
-              PayPai
-            </h1>
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-32 w-32 flex items-center justify-center">
+                <Image src={paypaiLogo} alt="PayPai logo" className="h-28 w-28 object-contain" />
+              </div>
+              <h1 className="paypai-logo text-5xl tracking-tight">
+                PayPai
+              </h1>
+            </div>
             <p className="mt-3 text-base text-slate-500">Loading...</p>
           </header>
         </div>
@@ -108,9 +117,14 @@ export default function Home() {
       <main className="min-h-screen bg-gradient-to-b from-[#F1F9FB] to-white">
         <div className="max-w-3xl mx-auto px-6 py-16">
           <header className="text-center">
-            <h1 className="text-5xl font-semibold text-slate-900 tracking-tight">
-              PayPai
-            </h1>
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-32 w-32 flex items-center justify-center">
+                <Image src={paypaiLogo} alt="PayPai logo" className="h-28 w-28 object-contain" />
+              </div>
+              <h1 className="paypai-logo text-5xl tracking-tight">
+                PayPai
+              </h1>
+            </div>
             <p className="mt-3 text-base text-slate-500">
               AI-powered smart wallet for Kite AI Chain.
             </p>
@@ -135,9 +149,14 @@ export default function Home() {
         <header ref={headerRef} className="mb-8 card-soft p-6">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
-                PayPai
-              </h1>
+              <div className="flex items-center gap-4">
+                <div className="h-24 w-24 flex items-center justify-center">
+                  <Image src={paypaiLogo} alt="PayPai logo" className="h-20 w-20 object-contain" />
+                </div>
+                <h1 className="paypai-logo text-4xl tracking-tight">
+                  PayPai
+                </h1>
+              </div>
               <div className="mt-3 text-xs text-slate-500">
                 Secure AI wallet for Kite Chain.
               </div>

@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import { Providers } from "@/components/providers/WagmiProvider";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-poppins"
+});
 
 export const metadata: Metadata = {
   title: "PayPai - AI-Powered Smart Wallet",
@@ -15,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body><Providers>{children}</Providers></body>
+      <body className={poppins.variable}><Providers>{children}</Providers></body>
     </html>
   );
 }
