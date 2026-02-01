@@ -115,6 +115,7 @@ export async function GET(request: NextRequest) {
     const activity = logs
       .map((log) => {
         const parsed = iface.parseLog(log);
+        if (!parsed) return null;
         const amount: bigint = parsed.args.amount;
         const recipient: string = parsed.args.recipient;
         const executor: string = parsed.args.executor;
@@ -130,6 +131,7 @@ export async function GET(request: NextRequest) {
           timestamp
         };
       })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, 10);
 
