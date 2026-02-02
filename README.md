@@ -106,28 +106,11 @@ https://paypaisparkaihackthon.vercel.app/
 
 ### 🏆 Sponsor Technologies
 
-<table>
-<tr>
-<td width="50%">
-
-**🔷 Kite AI SDK**
-- Account Abstraction (ERC-4337)
-- Gasless transactions
-- Smart contract wallet deployment
-- User operation bundling
-
-</td>
-<td width="50%">
-
-**🤖 Qwen API**
-- Natural language understanding
-- Intent recognition
-- Transaction parameter extraction
-- Multi-turn conversation
-
-</td>
-</tr>
-</table>
+- **Kite AI SDK**
+  - Account Abstraction (ERC-4337)
+  - Gasless transactions
+  - Smart contract wallet deployment
+  - User operation bundling
 
 ### 🏗️ Full Technology Stack
 
@@ -427,18 +410,12 @@ PayPai/
   - Local activity logging
   - Transaction details view
 
-### 🚧 In Progress
 
-- [ ] **ERC-20 Token Support**
-  - Token transfer operations
-  - Balance tracking
-  
+### 📋 Planned
 - [ ] **Enhanced AI Capabilities**
   - Multi-step transactions
   - Batch operations
   - Advanced intent understanding
-
-### 📋 Planned
 
 - [ ] **Multi-Chain Support**
   - Cross-chain transactions
